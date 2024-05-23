@@ -65,7 +65,7 @@ class Channel
         //other vars
         std::vector<int> Operators;
         std::vector<Client> InvitedClients;
-}
+};
 
 // class Channel{
    

@@ -1,5 +1,7 @@
-SRC		=		src/server/server.cpp	\
-				src/channels/channels.cpp	\
+SRC		=		src/server/Server.cpp	\
+				src/server/Client.cpp	\
+				src/main.cpp \
+
 
 OBJ		=		$(SRC:.cpp=.o)
 
@@ -10,9 +12,7 @@ CXX		=		c++
 CXXFLAGS	=		-Wall  -std=c++98 -I./include -g3 -fsanitize=address
 
 HEADER	=		headers/server.hpp \
-				headers/channels.hpp\
 				headers/Client.hpp\
-				headers/parsedReplies.hpp
 
 all:		$(NAME)
 

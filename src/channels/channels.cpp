@@ -31,7 +31,6 @@ bool Channel::_isChannelNameValid(std::string name)
     }
     return true;    
 }
-// void Channel::eraseClient(Client &client)
 Channel *IRCserv::isChannelExisiting(std::string name)
 {
 	std::vector<Channel *>::iterator it;
@@ -45,27 +44,28 @@ Channel *IRCserv::isChannelExisiting(std::string name)
 }
 
 
-// {
-//     std::vector<Client>::iterator it;
-//     for (it = this->clients.begin(); it < this->clients.end(); it++)
-//     {
-//         if (it->nick == client.nick)
-//         {
-//             this->clients.erase(it);
-//             return;
-//         }
-//     }
-// }
+void Channel::eraseClient(Client &client)
+{
+    std::vector<Client>::iterator it;
+    for (it = this->clients.begin(); it < this->clients.end(); it++)
+    {
+        if (it->nick == client.nick)
+        {
+            this->clients.erase(it);
+            return;
+        }
+    }
+}
 
-// void Channel::eraseOp(int fd)
-// {
-//     std::vector<int>::iterator it;
-//     for (it = this->fdOps.begin(); it < this->fdOps.end(); it++)
-//     {
-//         if (*it == fd)
-//             this->fdOps.erase(it);
-//     }
-// }
+void Channel::eraseOp(int fd)
+{
+    std::vector<int>::iterator it;
+    for (it = this->fdOps.begin(); it < this->fdOps.end(); it++)
+    {
+        if (*it == fd)
+            this->fdOps.erase(it);
+    }
+}
 
 
 // getters :
