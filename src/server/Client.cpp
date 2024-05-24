@@ -4,15 +4,13 @@
 Client::Client()
 {
 	this->sock = -1;
-	this->registered = false;
-	std::string nickname = "";
-	std::string username = "";
+	this->registerState = 0;
 }
 
 Client::Client(int sock)
 {
 	this->sock = sock;
-	this->registered = false;
+	this->registerState = 0;
 }
 
 void Client::send_messageCH(char *msg)

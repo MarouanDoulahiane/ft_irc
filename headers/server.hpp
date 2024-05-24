@@ -17,8 +17,14 @@
 #define GRE "\e[1;32m"
 #define YEL "\e[1;33m"
 #include "Client.hpp"
+#include "parsedReplies.hpp"
 
 class Client;
+
+struct	cmd {
+	std::vector<std::string> args;
+	std::string	buff;
+};
 
 class Server
 {
@@ -38,7 +44,13 @@ class Server
     	void SerSocket();
     	void AcceptNewClient();
     	void ReceiveNewData(int fd);
+		void Registration(Client &cli, cmd &command);
     	static void SignalHandler(int signum);
     	void CloseFds();
     	void removeClient(int fd);
+		Client &findClient(int fd);
+		std::vector<cmd> parseBuffer(std::string buff);
+		void handlePass(Client &cli, cmd &command);
+		void handleNick(Client &cli, cmd &command);
+		void handleUser(Client &cli, cmd &command);
 };
