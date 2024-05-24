@@ -119,7 +119,7 @@ void Server::ReceiveNewData(int fd)
 	}
 	else
 	{
-		buff[bytes] = '\0';
+		buff[bytes] = '\0';	
 		std::cout << YEL << "Client <" << fd << "> Data: " << WHI << buff;
 	}
 }
