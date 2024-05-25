@@ -24,6 +24,11 @@ void Client::send_message(std::string msg)
 	write(this->sock, msg.c_str(), msg.length());
 }
 
+int Client::GetFd()
+{
+	return sock;
+}
+
 Client::~Client()
 {
     

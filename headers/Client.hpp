@@ -14,14 +14,14 @@ class Client
 		std::string		mode;
 		std::string		line;
         std::string     Ipadd;
-		// std::vector<Channel *> _channels;
+		std::vector<Channel *> Channels;
 		std::vector<std::string> invitedChannels;
 		int			registered;
 		Client();
 		~Client();
 		Client(int sock);
 	
-	    int GetFd(){return sock;} //-> getter for fd
+	    int GetFd();
 
 	    void SetFd(int fd){sock = fd;} //-> setter for fd
 	    void setIpAdd(std::string ipadd){Ipadd = ipadd;}
