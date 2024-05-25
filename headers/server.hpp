@@ -25,15 +25,11 @@ class Server
     private:
     	int Port;
         std::string pass;
-    	int SerSocketFd;
+    	int sockFd;
     	static bool Signal; 
     	std::vector<Client> clients;
     	std::vector<struct pollfd> fds; // vector of pollfd
     public:
-    	Server()
-		{
-			SerSocketFd = -1;
-		}
     	void IrcServerInit(std::string port, std::string password);
     	void SerSocket();
     	void AcceptNewClient();
