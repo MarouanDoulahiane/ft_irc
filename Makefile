@@ -13,6 +13,7 @@ CXXFLAGS	=		-Wall  -std=c++98 -I./include -g3 -fsanitize=address
 
 HEADER	=		headers/server.hpp \
 				headers/Client.hpp\
+				headers/channels.hpp\
 
 all:		$(NAME)
 

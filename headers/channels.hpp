@@ -5,6 +5,7 @@
 #include <iostream>
 #include <vector>
 #include "Server.hpp"
+#include "channels.hpp"
 
 class Client;
 class Server;

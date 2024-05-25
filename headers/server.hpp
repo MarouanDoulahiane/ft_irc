@@ -22,10 +22,17 @@
 class Client;
 class Channel;
 
+struct	cmd 
+{
+	std::vector<std::string> args;
+	std::string	buff;
+};
 
 #define SERVER_PREFIX "IRC"
 #define SERVER_SUFFIX "localhost"
 #define SERVER_HOSTNAME SERVER_PREFIX + SERVER_SUFFIX
+
+
 class Server
 {
         std::string pass;
@@ -41,6 +48,7 @@ class Server
 		std::vector<Channel*> channels;
     public:
     	Server();
+		~Server();
     	static void SignalHandler(int signum);
     	
 		
@@ -49,10 +57,15 @@ class Server
 
     	void AcceptNewClient();
     	void ReceiveNewData(int fd);
+		void Registration(Client &cli, cmd &command);
     	void removeClient(int fd);
 
 		Channel *getChannelByName(std::string name);
-
+		Client &findClient(int fd);
+		std::vector<cmd> parseBuffer(std::string buff);
+		void handlePass(Client &cli, cmd &command);
+		void handleNick(Client &cli, cmd &command);
+		void handleUser(Client &cli, cmd &command);
 		//getters
 		std::string const getHostName();
     	void CloseFds();

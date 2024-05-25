@@ -1,5 +1,7 @@
 #include "../../headers/Server.hpp"
 #include "../../headers/Client.hpp"
+#include "../../headers/channels.hpp"
+#include "../../headers/parsedReplies.hpp"
 
 Server::Server()
 {
@@ -108,7 +110,25 @@ void Server::AcceptNewClient()
 	std::cout << GRE << "Client <" << incofd << "> Connected" << WHI << std::endl;
 }
 
-
+void	Server::Registration(Client &cli, cmd &command)
+{
+	int initState = cli.registerState;
+	if (!(cli.registerState & HAVE_PASS) && command.args[0] == "PASS")
+		 handlePass(cli, command);
+	else if (!(cli.registerState & HAVE_NICK) && command.args[0] == "NICK")
+		handleNick(cli, command);
+	else if (command.args[0] == "USER")
+		handleUser(cli, command);
+	if (initState == cli.registerState)
+		cli.send_message(ERR_ALREADYREGISTERED(cli.nick, std::string("hostname")));
+	if (cli.registerState == HAVE_REGISTERD)
+	{
+		cli.send_message(RPL_WELCOME(cli.nick, std::string("hostname")));
+		cli.send_message(RPL_YOURHOST(cli.nick, std::string("hostname")));
+		cli.send_message(RPL_CREATED(cli.nick, std::string("hostname")));
+		cli.send_message(RPL_MYINFO(cli.nick, std::string("hostname")));
+	}
+}
 void Server::ReceiveNewData(int fd)
 {
 	char buff[1024];
@@ -116,17 +136,183 @@ void Server::ReceiveNewData(int fd)
 	ssize_t bytes = recv(fd, buff, sizeof(buff) - 1 , 0);
 	if(bytes <= 0)
 	{ 
-		std::cout << RED << "Client [[" << fd << "]] Disconnected" << WHI << std::endl;
+		std::cout << RED << "Client " << fd << " Disconnected" << WHI << std::endl;
 		removeClient(fd);
 		close(fd);
 	}
 	else
 	{
 		buff[bytes] = '\0';
-		std::cout << YEL << "Client [[" << fd << "]] Data: " << WHI << buff;
+		std::vector<cmd>	commands = parseBuffer(buff);
+		Client &cli = findClient(fd);
+		// register----?
+		for (size_t i = 0; i < commands.size(); i++)
+		{
+			// PING PONG
+			if (commands[i].args.size() > 0 && commands[i].args[0] == "PING")
+				cli.send_message(RPL_PONG(cli.nick, commands[i].buff));
+			else if (commands[i].args.size() > 0 && commands[i].args[0] == "PONG")
+				cli.send_message(RPL_PING(cli.nick, commands[i].buff));
+			else if (cli.registerState == HAVE_REGISTERD)
+			{
+				if  (commands[i].args.size() > 0 && commands[i].args[0] == "USER")
+					cli.send_message(ERR_ALREADYREGISTERED(cli.nick, std::string("hostname")));
+			}
+			else if (commands[i].args.size() > 0 && (commands[i].args[0] == "PASS" || commands[i].args[0] == "NICK" || commands[i].args[0] == "USER"))
+				Registration(cli, commands[i]);
+			else
+				cli.send_message(ERR_NOTREGISTERED(cli.nick, std::string("hostname")));
+		}
 	}
 }
 
+void	printVectorCmd(std::vector<cmd> commands)
+{
+	for (size_t i = 0; i < commands.size(); i++)
+	{
+		std::cout << "buff: " << "|" << commands[i].buff << "|" << std::endl;
+		for (size_t j = 0; j < commands[i].args.size(); j++)
+			std::cout << "args[" << j << "]: |" << commands[i].args[j] << "|" << std::endl;
+	}
+}
+
+
+
+std::vector<cmd> Server::parseBuffer(std::string buff)
+{
+	std::vector<cmd>	commands;
+
+	// struct	cmd {
+	// 	std::vector<std::string> args;
+	// 	std::string	buff;
+	// };
+
+	std::string::size_type start = 0;
+	std::string::size_type end = 0;
+
+	while (end != std::string::npos)
+	{
+		cmd command;
+		end = buff.find("\r\n", start);
+		command.buff = buff.substr(start, end - start);
+		std::string::size_type start_arg = 0;
+		std::string::size_type end_arg = 0;
+		while (end_arg != std::string::npos)
+		{
+			end_arg = command.buff.find(" ", start_arg);
+			command.args.push_back(command.buff.substr(start_arg, end_arg - start_arg));
+			start_arg = end_arg + 1;
+		}
+		start = command.buff.find(":", start);
+		if (start != std::string::npos)
+			command.buff = command.buff.substr(start + 1);
+		else
+			command.buff = "";
+
+		while (command.buff.length() && ((command.buff[command.buff.length() - 1] == '\r') \
+			|| command.buff[command.buff.length() - 1] == '\n'))
+			command.buff = command.buff.substr(0, command.buff.length() - 1);
+
+		while (command.args.size() && command.args[command.args.size() - 1].size() &&( command.args[command.args.size() - 1][command.args[command.args.size() - 1].size() - 1] == '\r' \
+			|| command.args[command.args.size() - 1][command.args[command.args.size() - 1].size() - 1] == '\n'))
+			command.args[command.args.size() - 1] = command.args[command.args.size() - 1].substr(0, command.args[command.args.size() - 1].size() - 1);
+		while (command.args.size() && command.args[command.args.size() - 1].size() == 0)
+			command.args.pop_back();
+		
+		if (command.args.size() > 0 && command.args[0] != "")
+			commands.push_back(command);
+		start = end + 2;
+	}
+
+	return commands;
+}
+
+
+void	Server::handleUser(Client &cli, cmd &command)
+{
+	if (command.args.size() != 5)
+	{
+		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, std::string("hostname")));
+		return;
+	}
+	cli.user = command.args[1];
+	cli.hostname = command.args[2];
+	cli.realname = command.buff;
+	cli.registerState |= HAVE_USER;
+}
+
+void	Server::handleNick(Client &cli, cmd &command)
+{
+	if (command.args.size() != 2)
+	{
+		if (command.args.size() == 1)
+			cli.send_message(ERR_NONICKNAMEGIVEN(cli.nick, std::string("hostname")));
+		else
+			cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, std::string("hostname")));
+		return;
+	}
+	for (size_t i = 0; i < clients.size(); i++)
+	{
+		if ((command.args[1][0] == ':' && clients[i].nick == command.buff) || clients[i].nick == command.args[1])
+		{
+			cli.send_message(ERR_NICKNAMEINUSE(cli.nick, std::string("hostname")));
+			return;
+		}
+	}
+	for (size_t i = 0; command.args[1][0] != ':' && i < command.args[1].size(); i++)
+	{
+		if (isspace(command.args[1][i]) || command.args[1][i] == ':' || command.args[1][i] == '#')
+		{
+			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, std::string("hostname")));
+			return;
+		}
+	}
+	for (size_t i = 0; command.args[1][0] == ':' && i < command.buff.size(); i++)
+	{
+		if (isspace(command.buff[i]) || command.buff[i] == ':' || command.buff[i] == '#')
+		{
+			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, std::string("hostname")));
+			return;
+		}
+	}
+	if (command.args[1][0] == ':')
+		cli.nick = command.buff;
+	else
+		cli.nick = command.args[1];
+	cli.registerState |= HAVE_NICK;
+}
+
+void	Server::handlePass(Client &cli, cmd &command)
+{
+	if (command.args.size() != 2 && command.buff.size() == 0)
+	{
+		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, std::string("hostname")));
+		return;
+	}
+	else if (command.args.size() == 2 && command.args[1][0] != ':' && command.args[1] == pass)
+	{
+		cli.registerState |= HAVE_PASS;
+		return;
+	}
+	else if (command.args.size() >= 2 && command.args[1][0] == ':' && command.buff == pass)
+	{
+		cli.registerState |= HAVE_PASS;
+		return;
+	}
+	cli.send_message(ERR_PASSWDMISMATCH(cli.nick, std::string("hostname")));
+}
+
+Client	&Server::findClient(int fd)
+{
+	for (unsigned int i = 0; i < clients.size(); i++)
+	{
+		if (clients[i].sock == fd)
+			return clients[i];
+	}
+	CloseFds();
+	throw std::runtime_error("Client not found");
+}
+//lol
 void Server::removeClient(int fd)
 {
 	for(size_t i = 0; i < fds.size(); i++)
@@ -230,15 +416,20 @@ std::string const Server::getHostName()
 	return IrcServhostname;
 }
 
-Channel *Server::getChannelByName(std::string name)
+// Channel *Server::getChannelByName(std::string name)
+// {
+//     Channel *token;
+// 	std::vector<Channel *>::iterator it;
+// 	for (it = this->channels.begin(); it < this->channels.end(); it++)
+// 	{
+//         token = *it;
+// 		if (name.compare((*token).getName()) == 0)
+// 			return token;
+// 	}
+// 	return NULL;
+// }
+
+Server::~Server()
 {
-    Channel *token;
-	std::vector<Channel *>::iterator it;
-	for (it = this->channels.begin(); it < this->channels.end(); it++)
-	{
-        token = *it;
-		if (name.compare((*token).getName()) == 0)
-			return token;
-	}
-	return NULL;
+
 }

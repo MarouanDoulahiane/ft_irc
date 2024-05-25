@@ -3,6 +3,13 @@
 #include "Server.hpp"
 
 
+#define HAVE_PASS 0b1
+#define HAVE_NICK 0b10
+#define HAVE_USER 0b100
+#define HAVE_REGISTERD 0b111
+
+class Channel;
+
 class Client
 {
 	public:
@@ -16,7 +23,8 @@ class Client
         std::string     Ipadd;
 		std::vector<Channel *> Channels;
 		std::vector<std::string> invitedChannels;
-		int			registered;
+		// just a flag as state of registration
+		int			registerState;
 		Client();
 		~Client();
 		Client(int sock);
