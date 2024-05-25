@@ -1,4 +1,4 @@
-#include "../../headers/Server.hpp"
+#include "../../headers/server.hpp"
 #include "../../headers/Client.hpp"
 
 

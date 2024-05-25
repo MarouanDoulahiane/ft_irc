@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Server.hpp"
+#include "server.hpp"
 
 #define HAVE_PASS 0b1
 #define HAVE_NICK 0b10
