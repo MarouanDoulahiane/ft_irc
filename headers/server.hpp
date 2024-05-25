@@ -17,28 +17,43 @@
 #define GRE "\e[1;32m"
 #define YEL "\e[1;33m"
 #include "Client.hpp"
+#include "channels.hpp"
 
 class Client;
+class Channel;
 
+
+#define SERVER_PREFIX "IRC"
+#define SERVER_SUFFIX "localhost"
+#define SERVER_HOSTNAME SERVER_PREFIX + SERVER_SUFFIX
 class Server
 {
-    private:
-    	int Port;
         std::string pass;
-    	int SerSocketFd;
+    	int Port;
+    	int sockFd;
+		std::string IrcServhostname;
     	static bool Signal; 
     	std::vector<Client> clients;
-    	std::vector<struct pollfd> fds; // vector of pollfd
+    	std::vector<struct pollfd> fds;
+		
+		
+		//channels--
+		std::vector<Channel*> channels;
     public:
-    	Server()
-		{
-			SerSocketFd = -1;
-		}
-    	void IrcServerInit(std::string port, std::string password);
+    	Server();
+    	static void SignalHandler(int signum);
+    	
+		
+		void IrcServerInit(std::string port, std::string password);
     	void SerSocket();
+
     	void AcceptNewClient();
     	void ReceiveNewData(int fd);
-    	static void SignalHandler(int signum);
-    	void CloseFds();
     	void removeClient(int fd);
+
+		Channel *getChannelByName(std::string name);
+
+		//getters
+		std::string const getHostName();
+    	void CloseFds();
 };
