@@ -131,12 +131,16 @@ void Server::ReceiveNewData(int fd)
 	{
 		buff[bytes] = '\0';
 		std::vector<cmd>	commands = parseBuffer(buff);
-		printVectorCmd(commands);
 		Client &cli = findClient(fd);
 		// register----?
 		for (size_t i = 0; i < commands.size(); i++)
 		{
-			if (cli.registerState & HAVE_REGISTERD)
+			// PING PONG
+			if (commands[i].args.size() > 0 && commands[i].args[0] == "PING")
+				cli.send_message(RPL_PONG(cli.nick, commands[i].buff));
+			else if (commands[i].args.size() > 0 && commands[i].args[0] == "PONG")
+				cli.send_message(RPL_PING(cli.nick, commands[i].buff));
+			else if (cli.registerState == HAVE_REGISTERD)
 			{
 				if  (commands[i].args.size() > 0 && commands[i].args[0] == "USER")
 					cli.send_message(ERR_ALREADYREGISTERED(cli.nick, std::string("hostname")));
@@ -144,7 +148,7 @@ void Server::ReceiveNewData(int fd)
 			else if (commands[i].args.size() > 0 && (commands[i].args[0] == "PASS" || commands[i].args[0] == "NICK" || commands[i].args[0] == "USER"))
 				Registration(cli, commands[i]);
 			else
-				cli.send_message("ERROR :Not registered\r\n");
+				cli.send_message(ERR_NOTREGISTERED(cli.nick, std::string("hostname")));
 		}
 	}
 }
@@ -208,8 +212,15 @@ void	Server::Registration(Client &cli, cmd &command)
 		handleNick(cli, command);
 	else if (command.args[0] == "USER")
 		handleUser(cli, command);
-	if (initState != cli.registerState)
-		cli.send_message("OK\r\n");
+	if (initState == cli.registerState)
+		cli.send_message(ERR_ALREADYREGISTERED(cli.nick, std::string("hostname")));
+	if (cli.registerState == HAVE_REGISTERD)
+	{
+		cli.send_message(RPL_WELCOME(cli.nick, std::string("hostname")));
+		cli.send_message(RPL_YOURHOST(cli.nick, std::string("hostname")));
+		cli.send_message(RPL_CREATED(cli.nick, std::string("hostname")));
+		cli.send_message(RPL_MYINFO(cli.nick, std::string("hostname")));
+	}
 }
 
 void	Server::handleUser(Client &cli, cmd &command)
@@ -263,9 +274,7 @@ void	Server::handleNick(Client &cli, cmd &command)
 		cli.nick = command.buff;
 	else
 		cli.nick = command.args[1];
-	std::cout << "registerState: " << cli.registerState << std::endl;
 	cli.registerState |= HAVE_NICK;
-	std::cout << "registerState: " << cli.registerState << std::endl;
 }
 
 void	Server::handlePass(Client &cli, cmd &command)
@@ -275,7 +284,7 @@ void	Server::handlePass(Client &cli, cmd &command)
 		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, std::string("hostname")));
 		return;
 	}
-	else if (command.args.size() == 2 && command.args[1][0] != ':' &&command.args[1] == pass)
+	else if (command.args.size() == 2 && command.args[1][0] != ':' && command.args[1] == pass)
 	{
 		cli.registerState |= HAVE_PASS;
 		return;
