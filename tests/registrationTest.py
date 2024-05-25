@@ -1,12 +1,8 @@
-# create a test i mean try to register to irc server from randomusers
-
-# localhost:6667
-# password: 1234
-
 import socket
 import random
 import string
 import time
+import threading
 
 def randomString(stringLength=10):
     letters = string.ascii_lowercase
@@ -24,6 +20,19 @@ def test_registration():
     data = s.recv(1024)
     print(data.decode())
 
-while True:
-    test_registration()
-    time.sleep(0.1)
+def run_test():
+    while True:
+        test_registration()
+        time.sleep(1)
+
+# Create multiple threads
+num_threads = 10
+threads = []
+for _ in range(num_threads):
+    t = threading.Thread(target=run_test)
+    threads.append(t)
+    t.start()
+
+# Wait for all threads to finish
+for t in threads:
+    t.join()
