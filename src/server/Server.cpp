@@ -6,6 +6,7 @@
 Server::Server()
 {
 	sockFd = -1;
+	this->IrcServhostname = "IRC-localhost";
 }
 
 bool Server::Signal = false;
@@ -183,13 +184,12 @@ void Server::ReceiveNewData(int fd)
 
 void Server::handleJOIN(cmd &command, Client &cli)
 {
-	(void)cli;
     if (command.args.size() <= 0)
         return;
 	if (command.args.size() == 1)
 		std::cout << "ERR_NEEDMOREPARAMS"<< std::endl;
     std::vector<std::string> channels;
-    std::vector<std::string> keys;
+	std::vector<std::string> keys;
 
     for (size_t i = 1; i < command.args.size(); ++i)
     {
@@ -225,61 +225,21 @@ void Server::handleJOIN(cmd &command, Client &cli)
 				std::string channelName = command.args[i].substr(1, command.args[i].size() - 1);
 				std::cout << YEL << channelName << std::endl;
 				channels.push_back(channelName);
-			}
-`			
+			}	
 		}
 		else if (i > 1)
 		{
-			
+			size_t posK = command.args[i].find('\0');
+			std::string _key  = command.args[i].substr(0, posK);
+			std::cout << RED << "KEY ::" << _key << std::endl;
+			keys.push_back(_key);
 		}
-        // Add channel name to the list
     }
-
-    // // Join each channel
-    // for (const auto &channelName : channels)
-    // {
-    //     Channel* channel = getChannelByName(channelName);
-    //     if (channel == nullptr)
-    //     {
-    //         cli.send_message(ERR_NOSUCHCHANNEL(cli.nick, channelName));
-    //         continue;
-    //     }
-
-    //     if (channelName[0] == '&')
-    //     {
-    //         // Special channel, require a key
-    //         if (keys.empty())
-    //         {
-    //             cli.send_message(ERR_BADCHANNELKEY(cli.nick, channelName));
-    //             continue;
-    //         }
-    //         else
-    //         {
-    //             // Assuming Channel class has a method to join with a key
-    //             channel->joinClient(cli, keys.back());
-    //             keys.pop_back(); // Remove used key
-    //         }
-    //     }
-    //     else if (channelName[0] == '#')
-    //     {
-    //         // Regular channel, optional key
-    //         if (!keys.empty())
-    //         {
-    //             // Assuming Channel class has a method to join with a key
-    //             channel->joinClient(cli, keys.back());
-    //             keys.pop_back(); // Remove used key
-    //         }
-    //         else
-    //         {
-    //             channel->joinClient(cli);
-    //         }
-    //     }
-    //     else
-    //     {
-    //         cli.send_message(ERR_UNKNOWNCOMMAND(cli.nick, "JOIN"));
-    //         break;
-    //     }
-    // }
+	for(int i = 0; i < channels.size(); i++)
+	{
+		if (keys.empty() == true)
+			addNewChannel(channels[i],"xxx",cli);
+	}
 }
 
 
@@ -418,7 +378,7 @@ Client	&Server::findClient(int fd)
 			return clients[i];
 	}
 	CloseFds();
-	throw std::runtime_error("Client not found");
+	throw std::runtime_error("Client not found");// need to double ckeck
 }
 //lol
 void Server::removeClient(int fd)
@@ -443,41 +403,51 @@ void Server::removeClient(int fd)
 
 ////////////////////////////////////////////////////////
 //channel function :
+Channel *Server::isChannelExisiting(std::string name)
+{
+	std::vector<Channel *>::iterator it;
+	for (it = channels.begin(); it < channels.end(); it++)
+	{
+		Channel *c = *it;
+		if (name.compare((*c).getName()) == 0)
+			return c;
+	}
+	return NULL;
+}
 
-// void Server::addNewChannel(std::string name,char *pass, Client &client)
-// {
-//     Channel *channel = isChannelExisiting(name);
-//     if (!channel)
-//     {
-//         channel = new Channel(name, pass,client, this);
-//         this->channels.push_back(channel);
-//         client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
-//         client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
-//         client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
-//         client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
-        
-//     }
-//     else
-//     {
-//         std::cout << "Channel existing" << std::endl;
-//         try
-//         {
-//             channel->addClient(client, pass);
-//             client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpAddress()));
-//             client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
-//             client.send_message(RPL_TOPIC(client.nick,this->getHostName(), name, channel->getTopic()));
-//             client.send_message(RPL_TOPICTIME(client.nick , this->hostname, channel->getName(), channel->getTopicNickSetter(), channel->getTopicTimestamp()));
-//             client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
-//             client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
-//             channel->send_message(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpAddress()));
-//         }
-//         catch(const ClientErrMsgException &e)
-//         {
-//             e._client.send_message(e.getMessage());
-//         }
-        
-//     }
-// }
+void Server::addNewChannel(std::string name, std::string pass, Client &client)
+{
+	std::cout << RED << "DEBUG HERE" << std::endl;
+    Channel *channel = isChannelExisiting(name);
+    if (!channel)
+    {
+        channel = new Channel(name, pass,client, this);
+        this->channels.push_back(channel);
+        client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpadd()));
+        client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
+        client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
+        client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
+    }
+    else
+    {
+        std::cout << "Channel existing" << std::endl;
+        try
+        {
+            channel->add(client, pass);
+            client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpadd()));
+            client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
+            client.send_message(RPL_TOPIC(client.nick,this->getHostName(), name, channel->getTopic()));
+            // client.send_message(RPL_TOPICTIME(client.nick , IrcServhostname, channel->getName(), channel->getTopicNickSetter(), channel->getTopicTimestamp()));
+            client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
+            client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
+            channel->sendMessageCh(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpadd()));
+        }
+        catch(std::exception &e)
+        {
+            e.what();
+        }
+    }
+}
 
 // void IRCserv::removeChannel(std::string name)
 // {
@@ -524,18 +494,18 @@ std::string const Server::getHostName()
 	return IrcServhostname;
 }
 
-// Channel *Server::getChannelByName(std::string name)
-// {
-//     Channel *token;
-// 	std::vector<Channel *>::iterator it;
-// 	for (it = this->channels.begin(); it < this->channels.end(); it++)
-// 	{
-//         token = *it;
-// 		if (name.compare((*token).getName()) == 0)
-// 			return token;
-// 	}
-// 	return NULL;
-// }
+Channel *Server::getChannelByName(std::string name)
+{
+    Channel *token;
+	std::vector<Channel *>::iterator it;
+	for (it = this->channels.begin(); it < this->channels.end(); it++)
+	{
+        token = *it;
+		if (name.compare((*token).getName()) == 0)
+			return token;
+	}
+	return NULL;
+}
 
 Server::~Server()
 {

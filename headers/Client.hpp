@@ -38,7 +38,7 @@ class Client
 
 		void send_message(std::string msg);
 		void send_messageCH(char *msg);
-		// std::string getIpAddress();
+		std::string getIpadd();
 		// std::vector<Channel *> getChannels();
 
 		// std::string getFullname();
@@ -53,5 +53,19 @@ class Client
 		// bool operator == (const Client &c);
 		// bool operator != (const Client &c);
 
-
 };
+	class ClientErrMsgException : public std::exception
+	{
+	    private:
+	        const std::string _cmessage;
+	        ClientErrMsgException() throw();
+	    public:
+	        ClientErrMsgException(std::string msg, Client &bc) throw();
+	        virtual ~ClientErrMsgException() throw();
+	        Client &_client;
+			const std::string getMessage() const;
+	        virtual const char* what() const throw()
+			{
+	            return (_cmessage.c_str());
+	        };
+	};

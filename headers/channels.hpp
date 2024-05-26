@@ -8,6 +8,7 @@
 #include "channels.hpp"
 #include "header.hpp"
 #include "parsedReplies.hpp"
+#include "Client.hpp"
 
 class Client;
 class Server;
@@ -45,7 +46,7 @@ class Channel
         std::vector<Client> clients;
         Channel();
         ~Channel();
-        Channel(std::string name, char *pass, Client &client, Server *srv);
+        Channel(std::string name, std::string pass, Client &client, Server *srv);
 
         
         //boolen functs
@@ -62,8 +63,7 @@ class Channel
         bool validChannelName(std::string name);
 
         // check and update ^_^
-        bool add(Client &client, char *pass);
-        bool addClient(Client &client, char *pass);
+        bool add(Client &client, std::string pass);
         void addInvited(Client &client);
         // bool part(Client &client, std::string issue);
         // bool quit(Client &client, std::string issue);

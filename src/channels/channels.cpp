@@ -1,13 +1,17 @@
 #include "../../headers/channels.hpp"
+#include "../../headers/Client.hpp"
+#include <exception>
 
-Channel::Channel(std::string name, char *pass, Client &client, Server *srv)
+
+Channel::Channel(std::string name, std::string pass, Client &client, Server *srv)
 {
     this->Ircserv = srv;
     this->srv_hostname = (*Ircserv).getHostName();
-    if (!this->isValidchName(name))
-        throw ClientErrMsgException(ERR_BADCHANNELNAME(client.nick, srv_hostname, name), client);
+    std::cout << RED << srv_hostname << std::endl;
+    // if (!this->validChannelName(name))
+    //     throw std::runtime_error(ERR_BADCHANNELNAME(client.nick, srv_hostname, name), client);
     this->name = name;
-    if (!pass)
+    if (pass.empty() == true)
     {
         this->isPasswordSet = false;
         this->add(client, pass);
@@ -17,10 +21,15 @@ Channel::Channel(std::string name, char *pass, Client &client, Server *srv)
         this->TopicTimestamp = time(NULL);
     }
     else
-    {
+    { 
+        this->add(client, pass);
+        this->Operators.push_back(client.sock);
+        this->TopicNicksetter = client.nick;
+        this->TopicUsersetter = client.user;
+        this->TopicTimestamp = time(NULL);
         this->isPasswordSet = true;
         this->password = pass;
-        this->setMode("+k");    
+        this->setMode("+k");   
     }
 }
 
@@ -29,13 +38,13 @@ void Channel::addInvited(Client &client)
     this->InvitedClients.push_back(client);
 }
 
-bool Channel::addClient(Client &client, char *pass)
+bool Channel::add(Client &client, std::string pass)
 {
     if (checkClient(client))
         throw ClientErrMsgException(ERR_USERONCHANNEL(this->srv_hostname, this->name, client.nick), client);
     if (this->isPasswordSet)
     {
-        if (!pass || this->password != pass)
+        if (!pass.empty() || this->password != pass)
             throw ClientErrMsgException(ERR_BADCHANNELKEY(client.nick, this->srv_hostname, this->name), client);
     }
     if (this->getuserLimit() > 0 && this->clients.size() >= this->getuserLimit())
@@ -52,7 +61,7 @@ bool Channel::addClient(Client &client, char *pass)
 
 void Channel::addOperator(const std::string& nickname, std::string hostName, Client &client)
 {
-    if (isNickInChannel(nickname) == true)
+    if (nickInChannel(nickname) == true)
     {
         std::vector<Client>::iterator it;
         for (it = this->clients.begin(); it != this->clients.end(); it++)
@@ -74,7 +83,7 @@ void Channel::addOperator(const std::string& nickname, std::string hostName, Cli
 
 void Channel::removeOperator(const std::string& nickname, std::string hostName, Client &client)
 {
-    if (isNickInChannel(nickname) == true)
+    if (nickInChannel(nickname) == true)
     {
 
         std::vector<Client>::iterator it;
@@ -83,7 +92,7 @@ void Channel::removeOperator(const std::string& nickname, std::string hostName, 
             if (it->nick == nickname)
             {
                 deleteOperator(it->sock);
-                this->send_message(RPL_MODEISOP(name, hostName, "-o", nickname));
+                this->sendMessageCh(RPL_MODEISOP(name, hostName, "-o", nickname));
                 // client.send_message(RPL_YOUREOPER(hostName, client.nick));
                 // it->send_message(ERR_CHANOPRIVSNEEDED(it->nick, hostName, this->getName()));
                 this->_isOperator = false;

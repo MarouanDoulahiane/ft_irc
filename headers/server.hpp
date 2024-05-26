@@ -46,8 +46,8 @@ class Server
 		
 		
 		//channels--
-		std::vector<Channel*> channels;
     public:
+		std::vector<Channel*> channels;
     	Server();
 		~Server();
     	static void SignalHandler(int signum);
@@ -68,6 +68,11 @@ class Server
 		void handleNick(Client &cli, cmd &command);
 		void handleUser(Client &cli, cmd &command);
 		void handleJOIN(cmd &command, Client &cli);
+
+
+		// channel functions
+		void addNewChannel(std::string name,std::string pass, Client &client);
+		Channel *isChannelExisiting(std::string name);
 		//getters
 		std::string const getHostName();
     	void CloseFds();

@@ -1,6 +1,8 @@
 #include "../../headers/Server.hpp"
 #include "../../headers/Client.hpp"
 
+
+class Client;
 Client::Client()
 {
 	this->sock = -1;
@@ -28,8 +30,29 @@ int Client::GetFd()
 {
 	return sock;
 }
+std::string Client::getIpadd()
+{
+	return Ipadd;
+}
 
 Client::~Client()
 {
     
+}
+
+
+///////// need change after
+
+ClientErrMsgException::ClientErrMsgException(std::string msg, Client &client) throw() : _cmessage(msg), _client(client)
+{
+}
+
+ClientErrMsgException::~ClientErrMsgException() throw()
+{
+
+}
+
+const std::string ClientErrMsgException::getMessage() const
+{
+	return this->_cmessage;
 }
