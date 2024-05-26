@@ -1,6 +1,8 @@
 #pragma once
 
 #include "Server.hpp"
+#include "header.hpp"
+#include "parsedReplies.hpp"
 
 
 #define HAVE_PASS 0b1

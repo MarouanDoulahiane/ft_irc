@@ -1,5 +1,6 @@
 SRC		=		src/server/Server.cpp	\
 				src/server/Client.cpp	\
+				src/channels/utils.cpp \
 				src/main.cpp \
 
 
@@ -11,7 +12,7 @@ CXX		=		c++
 
 CXXFLAGS	=		-Wall  -std=c++98 -I./include -g3 -fsanitize=address
 
-HEADER	=		headers/server.hpp \
+HEADER	=		headers/Server.hpp \
 				headers/Client.hpp\
 				headers/channels.hpp\
 

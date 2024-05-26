@@ -1,4 +1,5 @@
-#include "../headers/IRCserv.hpp"
+#include "../../headers/channels.hpp"
+#include "../../headers/Server.hpp"
 #include <string>
 #include <cctype>
 

@@ -129,6 +129,17 @@ void	Server::Registration(Client &cli, cmd &command)
 		cli.send_message(RPL_MYINFO(cli.nick, std::string("hostname")));
 	}
 }
+
+void	printVectorCmd(std::vector<cmd> commands)
+{
+	for (size_t i = 0; i < commands.size(); i++)
+	{
+		std::cout << "buff: " << "|" << commands[i].buff << "|" << std::endl;
+		for (size_t j = 0; j < commands[i].args.size(); j++)
+			std::cout << "args[" << j << "]: |" << commands[i].args[j] << "|" << std::endl;
+	}
+}
+
 void Server::ReceiveNewData(int fd)
 {
 	char buff[1024];
@@ -143,7 +154,8 @@ void Server::ReceiveNewData(int fd)
 	else
 	{
 		buff[bytes] = '\0';
-		std::vector<cmd>	commands = parseBuffer(buff);
+		std::vector<cmd>	commands = this->parseBuffer(buff);
+		printVectorCmd(commands);
 		Client &cli = findClient(fd);
 		// register----?
 		for (size_t i = 0; i < commands.size(); i++)
@@ -155,6 +167,9 @@ void Server::ReceiveNewData(int fd)
 				cli.send_message(RPL_PING(cli.nick, commands[i].buff));
 			else if (cli.registerState == HAVE_REGISTERD)
 			{
+				// commands
+				if  (commands[i].args.size() > 0 && commands[i].args[0] == "JOIN")
+					handleJOIN(commands[i], cli);
 				if  (commands[i].args.size() > 0 && commands[i].args[0] == "USER")
 					cli.send_message(ERR_ALREADYREGISTERED(cli.nick, std::string("hostname")));
 			}
@@ -166,15 +181,108 @@ void Server::ReceiveNewData(int fd)
 	}
 }
 
-void	printVectorCmd(std::vector<cmd> commands)
+void Server::handleJOIN(cmd &command, Client &cli)
 {
-	for (size_t i = 0; i < commands.size(); i++)
-	{
-		std::cout << "buff: " << "|" << commands[i].buff << "|" << std::endl;
-		for (size_t j = 0; j < commands[i].args.size(); j++)
-			std::cout << "args[" << j << "]: |" << commands[i].args[j] << "|" << std::endl;
-	}
+	(void)cli;
+    if (command.args.size() <= 0)
+        return;
+	if (command.args.size() == 1)
+		std::cout << "ERR_NEEDMOREPARAMS"<< std::endl;
+    std::vector<std::string> channels;
+    std::vector<std::string> keys;
+
+    for (size_t i = 1; i < command.args.size(); ++i)
+    {
+
+        size_t pos = command.args[i].find(",");
+		if (pos != std::string::npos)
+		{
+			std::cout << RED << "MORE THAN ONE CH" << std::endl;
+			channels = split(command.args[i],',');
+			for(size_t i = 0; i < channels.size(); i++)
+			{
+				size_t posH = channels[i].find("#");
+				if (posH || posH == std::string::npos)
+				{
+					std::cout << RED << "ERR_BADCHANNELNAME" << std::endl;
+					channels.pop_back();
+					return ;
+				}
+				else if (posH != std::string::npos)
+				{
+					std::string channelName = channels[i].substr(1, channels[i].size() - 1);
+					std::cout << YEL << channelName << std::endl;
+				}
+			}
+		}
+		else if (pos == std::string::npos && i == 1)
+		{
+			size_t posH = command.args[i].find("#");
+			if (posH || posH == std::string::npos)
+				std::cout << RED << "ERR_BADCHANNELNAME" << std::endl;
+			else if (posH != std::string::npos)
+			{
+				std::string channelName = command.args[i].substr(1, command.args[i].size() - 1);
+				std::cout << YEL << channelName << std::endl;
+				channels.push_back(channelName);
+			}
+`			
+		}
+		else if (i > 1)
+		{
+			
+		}
+        // Add channel name to the list
+    }
+
+    // // Join each channel
+    // for (const auto &channelName : channels)
+    // {
+    //     Channel* channel = getChannelByName(channelName);
+    //     if (channel == nullptr)
+    //     {
+    //         cli.send_message(ERR_NOSUCHCHANNEL(cli.nick, channelName));
+    //         continue;
+    //     }
+
+    //     if (channelName[0] == '&')
+    //     {
+    //         // Special channel, require a key
+    //         if (keys.empty())
+    //         {
+    //             cli.send_message(ERR_BADCHANNELKEY(cli.nick, channelName));
+    //             continue;
+    //         }
+    //         else
+    //         {
+    //             // Assuming Channel class has a method to join with a key
+    //             channel->joinClient(cli, keys.back());
+    //             keys.pop_back(); // Remove used key
+    //         }
+    //     }
+    //     else if (channelName[0] == '#')
+    //     {
+    //         // Regular channel, optional key
+    //         if (!keys.empty())
+    //         {
+    //             // Assuming Channel class has a method to join with a key
+    //             channel->joinClient(cli, keys.back());
+    //             keys.pop_back(); // Remove used key
+    //         }
+    //         else
+    //         {
+    //             channel->joinClient(cli);
+    //         }
+    //     }
+    //     else
+    //     {
+    //         cli.send_message(ERR_UNKNOWNCOMMAND(cli.nick, "JOIN"));
+    //         break;
+    //     }
+    // }
 }
+
+
 
 
 

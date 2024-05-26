@@ -4,8 +4,8 @@ Channel::Channel(std::string name, char *pass, Client &client, Server *srv)
 {
     this->Ircserv = srv;
     this->srv_hostname = (*Ircserv).getHostName();
-    // if (!this->isValidchName(name))
-    //     throw ClientErrMsgException(ERR_BADCHANNELNAME(client.nick, srv_hostname, name), client);
+    if (!this->isValidchName(name))
+        throw ClientErrMsgException(ERR_BADCHANNELNAME(client.nick, srv_hostname, name), client);
     this->name = name;
     if (!pass)
     {

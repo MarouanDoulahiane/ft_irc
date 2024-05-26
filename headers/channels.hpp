@@ -6,6 +6,8 @@
 #include <vector>
 #include "Server.hpp"
 #include "channels.hpp"
+#include "header.hpp"
+#include "parsedReplies.hpp"
 
 class Client;
 class Server;

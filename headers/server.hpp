@@ -18,6 +18,7 @@
 #define YEL "\e[1;33m"
 #include "Client.hpp"
 #include "channels.hpp"
+#include "parsedReplies.hpp"
 
 class Client;
 class Channel;
@@ -66,7 +67,11 @@ class Server
 		void handlePass(Client &cli, cmd &command);
 		void handleNick(Client &cli, cmd &command);
 		void handleUser(Client &cli, cmd &command);
+		void handleJOIN(cmd &command, Client &cli);
 		//getters
 		std::string const getHostName();
     	void CloseFds();
 };
+
+
+std::vector<std::string> split(const std::string &s, char delimiter);
