@@ -34,19 +34,21 @@ class Channel
 
 
         //boolen vars
+        Server      *Ircserv;
+
+    public:
+        Channel();
+        ~Channel();
+        Channel(std::string name, std::string pass, Client &client, Server *srv);
+
+        //more vars
         bool        isPasswordSet;
         bool        isInviteOnlySet;
         bool        _isOperator;
         bool        isTopicSet;
-        Server      *Ircserv;
-
-    public:
         std::vector<int> Operators;
         std::vector<Client> InvitedClients;
         std::vector<Client> clients;
-        Channel();
-        ~Channel();
-        Channel(std::string name, std::string pass, Client &client, Server *srv);
 
         
         //boolen functs
@@ -97,11 +99,17 @@ class Channel
         std::string getMode();
         int         getuserLimit();
         std::string getTopic();
+        std::string getTopicNickSetter();
         std::string getTopicTimestamp();
         std::string getTopicUserSetter();
 
 };
 
+
+void FInviteOnly(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName);
+void FKey(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName);
+void FUserLimit(Channel* channel, bool setFlag,  std::string& additionalParams, Client &client, std::string hostName);
+void FOperator(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName);
 // class Channel{
    
 

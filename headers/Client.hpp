@@ -43,7 +43,7 @@ class Client
 
 		// std::string getFullname();
 
-		// std::string getInvitedChannels();
+		std::string getInvitedChannels();
 
 		// void disconnect();
 		// void leaveAllChannels(std::string reason);

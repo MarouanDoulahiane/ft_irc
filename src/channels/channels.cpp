@@ -7,9 +7,8 @@ Channel::Channel(std::string name, std::string pass, Client &client, Server *srv
 {
     this->Ircserv = srv;
     this->srv_hostname = (*Ircserv).getHostName();
-    std::cout << RED << srv_hostname << std::endl;
-    // if (!this->validChannelName(name))
-    //     throw std::runtime_error(ERR_BADCHANNELNAME(client.nick, srv_hostname, name), client);
+    if (!this->validChannelName(name))
+        throw ClientErrMsgException(ERR_BADCHANNELNAME(client.nick, srv_hostname, name), client);
     this->name = name;
     if (pass.empty() == true)
     {
@@ -22,14 +21,14 @@ Channel::Channel(std::string name, std::string pass, Client &client, Server *srv
     }
     else
     { 
-        this->add(client, pass);
-        this->Operators.push_back(client.sock);
         this->TopicNicksetter = client.nick;
         this->TopicUsersetter = client.user;
         this->TopicTimestamp = time(NULL);
         this->isPasswordSet = true;
         this->password = pass;
-        this->setMode("+k");   
+        this->Operators.push_back(client.sock);
+        this->add(client, pass);
+        this->setMode("+k");// debug here double check 
     }
 }
 
@@ -42,9 +41,9 @@ bool Channel::add(Client &client, std::string pass)
 {
     if (checkClient(client))
         throw ClientErrMsgException(ERR_USERONCHANNEL(this->srv_hostname, this->name, client.nick), client);
-    if (this->isPasswordSet)
+    if (this->isPasswordSet == true)
     {
-        if (!pass.empty() || this->password != pass)
+        if (pass.empty() == true || this->password != pass)
             throw ClientErrMsgException(ERR_BADCHANNELKEY(client.nick, this->srv_hostname, this->name), client);
     }
     if (this->getuserLimit() > 0 && this->clients.size() >= this->getuserLimit())
@@ -169,6 +168,7 @@ void Channel::setTopic(std::string newTopic)
 void Channel::setKey(std::string newKey)
 {
     Key = newKey;
+    password = newKey;
 }
 
 
@@ -255,25 +255,25 @@ std::string Channel::getTopic()
     return Topic;
 }
 
-// std::string Channel::getTopicNickSetter()
-// {
-//     return this->topic_nicksetter;
-// }
+std::string Channel::getTopicNickSetter()
+{
+    return TopicNicksetter;
+}
 
-// std::string Channel::getTopicUserSetter()
-// {
-//     return this->topic_usersetter;
-// }
+std::string Channel::getTopicUserSetter()
+{
+    return this->TopicUsersetter;
+}
 
-// std::string Channel::getTopicTimestamp()
-// {
-//     std::stringstream ss;
-//     std::string str;
+std::string Channel::getTopicTimestamp()
+{
+    std::stringstream ss;
+    std::string str;
 
-//     ss << this->topic_set_timestamp;
-//     ss >> str;
-//     return (str);
-// }
+    ss << this->TopicTimestamp;
+    ss >> str;
+    return (str);
+}
 
 
 ///////////////////////////////////////////////////////////////////////////

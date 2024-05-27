@@ -40,11 +40,11 @@ class Server
     	int Port;
     	int sockFd;
 		std::string IrcServhostname;
-    	static bool Signal; 
     	std::vector<Client> clients;
     	std::vector<struct pollfd> fds;
 		
 		
+    	static bool Signal;
 		//channels--
     public:
 		std::vector<Channel*> channels;
@@ -64,19 +64,25 @@ class Server
 		Channel *getChannelByName(std::string name);
 		Client &findClient(int fd);
 		std::vector<cmd> parseBuffer(std::string buff);
+
+//      commands
 		void handlePass(Client &cli, cmd &command);
 		void handleNick(Client &cli, cmd &command);
 		void handleUser(Client &cli, cmd &command);
 		void handleJOIN(cmd &command, Client &cli);
-
-
+		void handleInvite(cmd &command, Client &cli);
+		void handleMode(cmd &command, Client &cli);
+		
 		// channel functions
-		void addNewChannel(std::string name,std::string pass, Client &client);
 		Channel *isChannelExisiting(std::string name);
+		void inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client);
+		void addNewChannel(std::string name,std::string pass, Client &client);
+		void applyModeFlags(std::string channelName, std::string modeFlags, std::string addParams, Client &client);
+		
+		
 		//getters
 		std::string const getHostName();
     	void CloseFds();
 };
-
 
 std::vector<std::string> split(const std::string &s, char delimiter);

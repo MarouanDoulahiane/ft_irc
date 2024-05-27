@@ -31,12 +31,87 @@ void       trim(std::string& str) {
         str = "";
 }
 
-
-std::string getReasonForResponse(char *reason)
+std::vector<cmd> Server::parseBuffer(std::string buff)
 {
-    if (!reason)
-        return (std::string(""));
-    std::string resp(" :");
-    resp += std::string(reason);
-    return resp;
+	std::vector<cmd>	commands;
+	std::string::size_type start = 0;
+	std::string::size_type end = 0;
+
+	while (end != std::string::npos)
+	{
+		cmd command;
+		end = buff.find("\r\n", start);
+		command.buff = buff.substr(start, end - start);
+		std::string::size_type start_arg = 0;
+		std::string::size_type end_arg = 0;
+		while (end_arg != std::string::npos)
+		{
+			end_arg = command.buff.find(" ", start_arg);
+			command.args.push_back(command.buff.substr(start_arg, end_arg - start_arg));
+			start_arg = end_arg + 1;
+		}
+		start = command.buff.find(":", start);
+		if (start != std::string::npos)
+			command.buff = command.buff.substr(start + 1);
+		else
+			command.buff = "";
+
+		while (command.buff.length() && ((command.buff[command.buff.length() - 1] == '\r') \
+			|| command.buff[command.buff.length() - 1] == '\n'))
+			command.buff = command.buff.substr(0, command.buff.length() - 1);
+
+		while (command.args.size() && command.args[command.args.size() - 1].size() &&( command.args[command.args.size() - 1][command.args[command.args.size() - 1].size() - 1] == '\r' \
+			|| command.args[command.args.size() - 1][command.args[command.args.size() - 1].size() - 1] == '\n'))
+			command.args[command.args.size() - 1] = command.args[command.args.size() - 1].substr(0, command.args[command.args.size() - 1].size() - 1);
+		while (command.args.size() && command.args[command.args.size() - 1].size() == 0)
+			command.args.pop_back();
+		
+		if (command.args.size() > 0 && command.args[0] != "")
+			commands.push_back(command);
+		start = end + 2;
+	}
+
+	return commands;
 }
+
+
+Client	&Server::findClient(int fd)
+{
+	for (unsigned int i = 0; i < clients.size(); i++)
+	{
+		if (clients[i].sock == fd)
+			return clients[i];
+	}
+	CloseFds();
+	throw std::runtime_error("Client not found");// need to double ckeck
+}
+//lol
+void Server::removeClient(int fd)
+{
+	for(size_t i = 0; i < fds.size(); i++)
+	{
+		if (fds[i].fd == fd)
+			{
+				fds.erase(fds.begin() + i); 
+				break;
+			}
+	}
+	for(size_t i = 0; i < clients.size(); i++)
+	{
+		if (clients[i].GetFd() == fd)
+			{clients.erase(clients.begin() + i); 
+			break;}
+	}
+
+}
+
+
+// std::string getReasonForResponse(char *reason)
+// {
+//     if (!reason)
+//         return (std::string(""));
+//     std::string resp(" :");
+//     resp += std::string(reason);
+//     return resp;
+// }
+

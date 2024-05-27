@@ -1,61 +1,62 @@
-void	IRCserv::handleInvite(char *msg, Client &client)
+#include "../../headers/Server.hpp"
+
+class Server;
+
+void	Server::handleInvite(cmd &command, Client &cli)
 {
-	char *tmp;
-	tmp = strtok(msg, " ");
-	if (strcmp("INVITE", tmp))
-		return;
-	char *nick = strtok(NULL, " ");
-	char *channel = strtok(NULL, " ");
-	if ((!nick || !strcmp(nick, ":"))&& !channel)
+	if (command.args.size() < 3)
 	{
-		client.send_message(RPL_INVITELIST(client.nick, this->getHostName(), client.getInvitedChannels()));
-		client.send_message(RPL_ENDOFINVITELIST(client.nick, this->getHostName()));
+		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, this->getHostName()));
 		return;
 	}
-	if (!nick || !channel)
+	std::string  nick = command.args[1];
+	std::string channel = command.args[2];
+	if ((nick.empty() || !command.buff.empty()) && channel.empty())
 	{
-		client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
+		cli.send_message(RPL_INVITELIST(cli.nick, this->getHostName(), cli.getInvitedChannels()));
+		cli.send_message(RPL_ENDOFINVITELIST(cli.nick, this->getHostName()));
 		return;
 	}
+	std::cout << RED << "DEBUG INVITE " << channel << std::endl;
 	Channel *ch = isChannelExisiting(channel);
 	if (!ch)
 	{
-		client.send_message(ERR_NOSUCHCHANNEL(client.nick, this->getHostName(), channel));
+		cli.send_message(ERR_NOSUCHCHANNEL(cli.nick, this->getHostName(), channel));
 		return;
 	}
-	if (!ch->isClientOnChannel(client))
+	if (!ch->checkClient(cli))
 	{
-		client.send_message(ERR_NOTONCHANNEL(this->getHostName(), channel));
+		cli.send_message(ERR_NOTONCHANNEL(this->getHostName(), channel));
 		return;
 	}
-	if (ch->isInviteOnly() && !ch->isFdOperator(client.sock))
+	if (ch->isInviteOnly() && !ch->isOnOperatorList(cli.sock))
 	{
-		client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, this->getHostName(), channel));
+		cli.send_message(ERR_CHANOPRIVSNEEDED(cli.nick, this->getHostName(), channel));
 		return;
 	}
-	if (ch->isNickInChannel(nick))
+	if (ch->nickInChannel(nick))
 	{
-		client.send_message(ERR_USERONCHANNEL(client.nick, this->getHostName(), nick));
+		cli.send_message(ERR_USERONCHANNEL(cli.nick, this->getHostName(), nick));
 		return;
 	}
-	Client *invited = NULL;
-	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
+	bool invited = false;
+	for (std::vector<Client>::iterator it = clients.begin(); it != clients.end(); it++)
 	{
-		if (it->second.nick == nick)
+		if (it->nick == nick)
 		{
-			invited = &it->second;
+			invited = true;
+			inviteClinetToChannel(*it, *ch, cli);// need to double check
 			break;
 		}
 	}
 	if (!invited)
 	{
-		client.send_message(ERR_NOSUCHNICK(client.nick, this->getHostName(), nick));
+		cli.send_message(ERR_NOSUCHNICK(cli.nick, this->getHostName(), nick));
 		return;
 	}
-	inviteClinetToChannel(*invited, *ch, client);
 }
 
-void IRCserv::inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client)
+void Server::inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client)
 {
 	// invitedClient.invitedChannels.push_back(channel.getName());
 	// check if client is already invited
@@ -63,15 +64,15 @@ void IRCserv::inviteClinetToChannel(Client &invitedClient, Channel &channel, Cli
 	if (it == invitedClient.invitedChannels.end())
 		invitedClient.invitedChannels.push_back(channel.getName());
 	bool isAreadyInvited = false;
-	for (size_t i = 0; i < channel.clientsInvited.size(); i++)
+	for (size_t i = 0; i < channel.InvitedClients.size(); i++)
 	{
-		if (channel.clientsInvited[i].nick == invitedClient.nick)
+		if (channel.InvitedClients[i].nick == invitedClient.nick)
 		{
 			isAreadyInvited = true;
 			break;
 		}
 	}
 	if (!isAreadyInvited)
-		channel.clientsInvited.push_back(invitedClient);
+		channel.InvitedClients.push_back(invitedClient);
 	invitedClient.send_message(RPL_INVITING(client.nick, this->getHostName(), invitedClient.nick, channel.getName()));
 }

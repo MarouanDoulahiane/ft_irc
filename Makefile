@@ -2,6 +2,9 @@ SRC		=		src/server/Server.cpp	\
 				src/server/Client.cpp	\
 				src/channels/utils.cpp \
 				src/channels/channels.cpp \
+				src/channels/Invite.cpp \
+				src/channels/JOIN.cpp \
+				src/channels/modeChannels.cpp \
 				src/main.cpp \
 
 

@@ -169,10 +169,14 @@ void Server::ReceiveNewData(int fd)
 			else if (cli.registerState == HAVE_REGISTERD)
 			{
 				// commands
-				if  (commands[i].args.size() > 0 && commands[i].args[0] == "JOIN")
-					handleJOIN(commands[i], cli);
 				if  (commands[i].args.size() > 0 && commands[i].args[0] == "USER")
 					cli.send_message(ERR_ALREADYREGISTERED(cli.nick, std::string("hostname")));
+				else if  (commands[i].args.size() >= 1 && commands[i].args[0] == "JOIN")
+					handleJOIN(commands[i], cli);
+				else if  (commands[i].args.size() >= 1 && commands[i].args[0] == "INVITE")
+					handleInvite(commands[i], cli);
+				else if  (commands[i].args.size() >= 1 && commands[i].args[0] == "MODE")
+					handleMode(commands[i], cli);
 			}
 			else if (commands[i].args.size() > 0 && (commands[i].args[0] == "PASS" || commands[i].args[0] == "NICK" || commands[i].args[0] == "USER"))
 				Registration(cli, commands[i]);
@@ -180,119 +184,6 @@ void Server::ReceiveNewData(int fd)
 				cli.send_message(ERR_NOTREGISTERED(cli.nick, std::string("hostname")));
 		}
 	}
-}
-
-void Server::handleJOIN(cmd &command, Client &cli)
-{
-    if (command.args.size() <= 0)
-        return;
-	if (command.args.size() == 1)
-		std::cout << "ERR_NEEDMOREPARAMS"<< std::endl;
-    std::vector<std::string> channels;
-	std::vector<std::string> keys;
-
-    for (size_t i = 1; i < command.args.size(); ++i)
-    {
-
-        size_t pos = command.args[i].find(",");
-		if (pos != std::string::npos)
-		{
-			std::cout << RED << "MORE THAN ONE CH" << std::endl;
-			channels = split(command.args[i],',');
-			for(size_t i = 0; i < channels.size(); i++)
-			{
-				size_t posH = channels[i].find("#");
-				if (posH || posH == std::string::npos)
-				{
-					std::cout << RED << "ERR_BADCHANNELNAME" << std::endl;
-					channels.pop_back();
-					return ;
-				}
-				else if (posH != std::string::npos)
-				{
-					std::string channelName = channels[i].substr(1, channels[i].size() - 1);
-					std::cout << YEL << channelName << std::endl;
-				}
-			}
-		}
-		else if (pos == std::string::npos && i == 1)
-		{
-			size_t posH = command.args[i].find("#");
-			if (posH || posH == std::string::npos)
-				std::cout << RED << "ERR_BADCHANNELNAME" << std::endl;
-			else if (posH != std::string::npos)
-			{
-				std::string channelName = command.args[i].substr(1, command.args[i].size() - 1);
-				std::cout << YEL << channelName << std::endl;
-				channels.push_back(channelName);
-			}	
-		}
-		else if (i > 1)
-		{
-			size_t posK = command.args[i].find('\0');
-			std::string _key  = command.args[i].substr(0, posK);
-			std::cout << RED << "KEY ::" << _key << std::endl;
-			keys.push_back(_key);
-		}
-    }
-	for(int i = 0; i < channels.size(); i++)
-	{
-		if (keys.empty() == true)
-			addNewChannel(channels[i],"xxx",cli);
-	}
-}
-
-
-
-
-
-std::vector<cmd> Server::parseBuffer(std::string buff)
-{
-	std::vector<cmd>	commands;
-
-	// struct	cmd {
-	// 	std::vector<std::string> args;
-	// 	std::string	buff;
-	// };
-
-	std::string::size_type start = 0;
-	std::string::size_type end = 0;
-
-	while (end != std::string::npos)
-	{
-		cmd command;
-		end = buff.find("\r\n", start);
-		command.buff = buff.substr(start, end - start);
-		std::string::size_type start_arg = 0;
-		std::string::size_type end_arg = 0;
-		while (end_arg != std::string::npos)
-		{
-			end_arg = command.buff.find(" ", start_arg);
-			command.args.push_back(command.buff.substr(start_arg, end_arg - start_arg));
-			start_arg = end_arg + 1;
-		}
-		start = command.buff.find(":", start);
-		if (start != std::string::npos)
-			command.buff = command.buff.substr(start + 1);
-		else
-			command.buff = "";
-
-		while (command.buff.length() && ((command.buff[command.buff.length() - 1] == '\r') \
-			|| command.buff[command.buff.length() - 1] == '\n'))
-			command.buff = command.buff.substr(0, command.buff.length() - 1);
-
-		while (command.args.size() && command.args[command.args.size() - 1].size() &&( command.args[command.args.size() - 1][command.args[command.args.size() - 1].size() - 1] == '\r' \
-			|| command.args[command.args.size() - 1][command.args[command.args.size() - 1].size() - 1] == '\n'))
-			command.args[command.args.size() - 1] = command.args[command.args.size() - 1].substr(0, command.args[command.args.size() - 1].size() - 1);
-		while (command.args.size() && command.args[command.args.size() - 1].size() == 0)
-			command.args.pop_back();
-		
-		if (command.args.size() > 0 && command.args[0] != "")
-			commands.push_back(command);
-		start = end + 2;
-	}
-
-	return commands;
 }
 
 
@@ -370,141 +261,11 @@ void	Server::handlePass(Client &cli, cmd &command)
 	cli.send_message(ERR_PASSWDMISMATCH(cli.nick, std::string("hostname")));
 }
 
-Client	&Server::findClient(int fd)
-{
-	for (unsigned int i = 0; i < clients.size(); i++)
-	{
-		if (clients[i].sock == fd)
-			return clients[i];
-	}
-	CloseFds();
-	throw std::runtime_error("Client not found");// need to double ckeck
-}
-//lol
-void Server::removeClient(int fd)
-{
-	for(size_t i = 0; i < fds.size(); i++)
-	{
-		if (fds[i].fd == fd)
-			{
-				fds.erase(fds.begin() + i); 
-				break;
-			}
-	}
-	for(size_t i = 0; i < clients.size(); i++)
-	{
-		if (clients[i].GetFd() == fd)
-			{clients.erase(clients.begin() + i); 
-			break;}
-	}
-
-}
-
-
-////////////////////////////////////////////////////////
-//channel function :
-Channel *Server::isChannelExisiting(std::string name)
-{
-	std::vector<Channel *>::iterator it;
-	for (it = channels.begin(); it < channels.end(); it++)
-	{
-		Channel *c = *it;
-		if (name.compare((*c).getName()) == 0)
-			return c;
-	}
-	return NULL;
-}
-
-void Server::addNewChannel(std::string name, std::string pass, Client &client)
-{
-	std::cout << RED << "DEBUG HERE" << std::endl;
-    Channel *channel = isChannelExisiting(name);
-    if (!channel)
-    {
-        channel = new Channel(name, pass,client, this);
-        this->channels.push_back(channel);
-        client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpadd()));
-        client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
-        client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
-        client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
-    }
-    else
-    {
-        std::cout << "Channel existing" << std::endl;
-        try
-        {
-            channel->add(client, pass);
-            client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpadd()));
-            client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
-            client.send_message(RPL_TOPIC(client.nick,this->getHostName(), name, channel->getTopic()));
-            // client.send_message(RPL_TOPICTIME(client.nick , IrcServhostname, channel->getName(), channel->getTopicNickSetter(), channel->getTopicTimestamp()));
-            client.send_message(RPL_NAMREPLY(this->getHostName(), channel->getListClients(), channel->getName(), client.nick));
-            client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
-            channel->sendMessageCh(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpadd()));
-        }
-        catch(std::exception &e)
-        {
-            e.what();
-        }
-    }
-}
-
-// void IRCserv::removeChannel(std::string name)
-// {
-//     Channel *channel = isChannelExisiting(name);
-//     if (!channel)
-//         return;
-//     std::vector<Channel *>::iterator it;
-//     for (it = this->channels.begin(); it < this->channels.end(); it++)
-//     {
-//         if ((*it)->getName() == name)
-//         {
-//             if ((*it)->getClients().size() > 0)
-//             {
-//                 std::vector<Client>::iterator itc;
-//                 for (itc = (*it)->getClients().begin(); itc < (*it)->getClients().end(); itc++)
-//                 {
-//                     (*it)->partClient(*itc, "");
-//                 }
-//             }
-//             this->channels.erase(it);
-//             delete channel;
-//             return;
-//         }
-//     }
-// }
-
-// void IRCserv::partChannel(std::string name,char *_reason, Client &client)
-// {
-//     Channel *channel = isChannelExisiting(name);
-//     if (!channel)
-//         client.send_message(ERR_NOSUCHCHANNEL(hostname, name, client.nick));
-//     if (!channel->is_member(client))
-//         client.send_message(ERR_NOTONCHANNEL(hostname, name));
-//     std::string reason("");
-//     if (_reason)
-//         reason = _reason;
-//     channel->partClient(client, reason);
-// }
-
 ///////////////////////////////////
 //getters
 std::string const Server::getHostName()
 {
 	return IrcServhostname;
-}
-
-Channel *Server::getChannelByName(std::string name)
-{
-    Channel *token;
-	std::vector<Channel *>::iterator it;
-	for (it = this->channels.begin(); it < this->channels.end(); it++)
-	{
-        token = *it;
-		if (name.compare((*token).getName()) == 0)
-			return token;
-	}
-	return NULL;
 }
 
 Server::~Server()
