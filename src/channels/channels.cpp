@@ -92,7 +92,7 @@ void Channel::removeOperator(const std::string& nickname, std::string hostName, 
             {
                 deleteOperator(it->sock);
                 this->sendMessageCh(RPL_MODEISOP(name, hostName, "-o", nickname));
-                // client.send_message(RPL_YOUREOPER(hostName, client.nick));
+                client.send_message(RPL_YOUREOPER(hostName, client.nick));
                 // it->send_message(ERR_CHANOPRIVSNEEDED(it->nick, hostName, this->getName()));
                 this->_isOperator = false;
                 return;

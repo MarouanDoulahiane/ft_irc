@@ -7,7 +7,7 @@ int main(int ac, char **av) {
 		std::cerr << "Usage: ./ircserv [port] [password]" << std::endl;
 		return 1;
 	}
-		Server irc;
+	Server irc;
 	try
 	{
 	    std::cout << "---- SERVER ----" << std::endl;
@@ -15,8 +15,9 @@ int main(int ac, char **av) {
         signal(SIGQUIT, Server::SignalHandler);
         irc.IrcServerInit(av[1], av[2]);
 	}
-	catch(const std::exception& e){
-		irc.CloseFds(); //-> close the file descriptors
+	catch(const std::exception& e)
+	{
+		irc.CloseFds();
 		std::cerr << e.what() << std::endl;
 	}
 	std::cout << "The Server Closed!" << std::endl;

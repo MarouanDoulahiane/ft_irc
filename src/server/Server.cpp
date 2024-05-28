@@ -106,6 +106,7 @@ void Server::AcceptNewClient()
 	NewPoll.revents = 0; // set the revents to 0
 	cli.SetFd(incofd);
 	cli.setIpAdd(inet_ntoa((cliadd.sin_addr)));
+	cli.setHostname(this->getHostName());
 	clients.push_back(cli);
 	fds.push_back(NewPoll); 
 	std::cout << GRE << "Client <" << incofd << "> Connected" << WHI << std::endl;
@@ -121,13 +122,13 @@ void	Server::Registration(Client &cli, cmd &command)
 	else if (command.args[0] == "USER")
 		handleUser(cli, command);
 	if (initState == cli.registerState)
-		cli.send_message(ERR_ALREADYREGISTERED(cli.nick, std::string("hostname")));
+		cli.send_message(ERR_ALREADYREGISTERED(cli.nick, cli.getHostname()));
 	if (cli.registerState == HAVE_REGISTERD)
 	{
-		cli.send_message(RPL_WELCOME(cli.nick, std::string("hostname")));
-		cli.send_message(RPL_YOURHOST(cli.nick, std::string("hostname")));
-		cli.send_message(RPL_CREATED(cli.nick, std::string("hostname")));
-		cli.send_message(RPL_MYINFO(cli.nick, std::string("hostname")));
+		cli.send_message(RPL_WELCOME(cli.nick, cli.getHostname()));
+		cli.send_message(RPL_YOURHOST(cli.nick, cli.getHostname()));
+		cli.send_message(RPL_CREATED(cli.nick, cli.getHostname()));
+		cli.send_message(RPL_MYINFO(cli.nick, cli.getHostname()));
 	}
 }
 
@@ -145,11 +146,13 @@ void Server::ReceiveNewData(int fd)
 {
 	char buff[1024];
 	memset(buff, 0, sizeof(buff));
+	Client &cli = findClient(fd);
 	ssize_t bytes = recv(fd, buff, sizeof(buff) - 1 , 0);
 	if(bytes <= 0)
 	{ 
 		std::cout << RED << "Client " << fd << " Disconnected" << WHI << std::endl;
 		removeClient(fd);
+		cli.leaveAllChannels("Disconnected");
 		close(fd);
 	}
 	else
@@ -157,8 +160,6 @@ void Server::ReceiveNewData(int fd)
 		buff[bytes] = '\0';
 		std::vector<cmd>	commands = this->parseBuffer(buff);
 		printVectorCmd(commands);
-		Client &cli = findClient(fd);
-		// register----?
 		for (size_t i = 0; i < commands.size(); i++)
 		{
 			// PING PONG
@@ -170,7 +171,7 @@ void Server::ReceiveNewData(int fd)
 			{
 				// commands
 				if  (commands[i].args.size() > 0 && commands[i].args[0] == "USER")
-					cli.send_message(ERR_ALREADYREGISTERED(cli.nick, std::string("hostname")));
+					cli.send_message(ERR_ALREADYREGISTERED(cli.nick, cli.getHostname()));
 				else if  (commands[i].args.size() >= 1 && commands[i].args[0] == "JOIN")
 					handleJOIN(commands[i], cli);
 				else if  (commands[i].args.size() >= 1 && commands[i].args[0] == "INVITE")
@@ -181,7 +182,7 @@ void Server::ReceiveNewData(int fd)
 			else if (commands[i].args.size() > 0 && (commands[i].args[0] == "PASS" || commands[i].args[0] == "NICK" || commands[i].args[0] == "USER"))
 				Registration(cli, commands[i]);
 			else
-				cli.send_message(ERR_NOTREGISTERED(cli.nick, std::string("hostname")));
+				cli.send_message(ERR_NOTREGISTERED(cli.nick, cli.getHostname()));
 		}
 	}
 }
@@ -191,7 +192,7 @@ void	Server::handleUser(Client &cli, cmd &command)
 {
 	if (command.args.size() != 5)
 	{
-		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, std::string("hostname")));
+		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, cli.getHostname()));
 		return;
 	}
 	cli.user = command.args[1];
@@ -205,16 +206,16 @@ void	Server::handleNick(Client &cli, cmd &command)
 	if (command.args.size() != 2)
 	{
 		if (command.args.size() == 1)
-			cli.send_message(ERR_NONICKNAMEGIVEN(cli.nick, std::string("hostname")));
+			cli.send_message(ERR_NONICKNAMEGIVEN(cli.nick, cli.getHostname()));
 		else
-			cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, std::string("hostname")));
+			cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, cli.getHostname()));
 		return;
 	}
 	for (size_t i = 0; i < clients.size(); i++)
 	{
 		if ((command.args[1][0] == ':' && clients[i].nick == command.buff) || clients[i].nick == command.args[1])
 		{
-			cli.send_message(ERR_NICKNAMEINUSE(cli.nick, std::string("hostname")));
+			cli.send_message(ERR_NICKNAMEINUSE(cli.nick, cli.getHostname()));
 			return;
 		}
 	}
@@ -222,7 +223,7 @@ void	Server::handleNick(Client &cli, cmd &command)
 	{
 		if (isspace(command.args[1][i]) || command.args[1][i] == ':' || command.args[1][i] == '#')
 		{
-			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, std::string("hostname")));
+			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, cli.getHostname()));
 			return;
 		}
 	}
@@ -230,7 +231,7 @@ void	Server::handleNick(Client &cli, cmd &command)
 	{
 		if (isspace(command.buff[i]) || command.buff[i] == ':' || command.buff[i] == '#')
 		{
-			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, std::string("hostname")));
+			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, cli.getHostname()));
 			return;
 		}
 	}
@@ -245,7 +246,7 @@ void	Server::handlePass(Client &cli, cmd &command)
 {
 	if (command.args.size() != 2 && command.buff.size() == 0)
 	{
-		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, std::string("hostname")));
+		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, cli.getHostname()));
 		return;
 	}
 	else if (command.args.size() == 2 && command.args[1][0] != ':' && command.args[1] == pass)
@@ -258,7 +259,7 @@ void	Server::handlePass(Client &cli, cmd &command)
 		cli.registerState |= HAVE_PASS;
 		return;
 	}
-	cli.send_message(ERR_PASSWDMISMATCH(cli.nick, std::string("hostname")));
+	cli.send_message(ERR_PASSWDMISMATCH(cli.nick, cli.getHostname()));
 }
 
 ///////////////////////////////////

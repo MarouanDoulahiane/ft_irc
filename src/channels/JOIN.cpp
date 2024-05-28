@@ -29,8 +29,6 @@ Channel *Server::getChannelByName(std::string name)
 
 void Server::addNewChannel(std::string name, std::string pass, Client &client)
 {
-	// std::cout << RED << "DEBUG HERE" << std::endl;
-	// std::cout << RED << name << "-" << pass << std::endl;
     Channel *channel = isChannelExisiting(name);
     if (!channel)
     {

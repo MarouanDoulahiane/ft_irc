@@ -1,7 +1,7 @@
 #include "../../headers/Server.hpp"
 
 void Server::handleMode(cmd &command, Client &cli)
-{// mode la +kakak addpa appa appa
+{
     if (command.args.size() < 2)
     {
         cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, this->getHostName()));
@@ -23,7 +23,6 @@ void Server::handleMode(cmd &command, Client &cli)
         addParams += command.args[i] + " ";
         applyModeFlags(target, flags, addParams, cli);
     }
-    std::cout << GRE << addParams << WHI << std::endl;
     if (i == 3)
         applyModeFlags(target, flags, addParams, cli);
     
@@ -43,7 +42,6 @@ void FKey(Channel* channel, bool setFlag,  std::string& additionalParams, Client
             client.send_message(ERR_NEEDMOREPARAMS(client.nick, hostName));
         else
         {
-            std::cout << GRE << additionalParams <<  std::endl;
             channel->setKey(additionalParams);
             channel->isPasswordSet = true;
         }
@@ -129,7 +127,6 @@ void Server::applyModeFlags(std::string channelName, std::string modeFlags, std:
     }
     else
         splitParams.push_back(addParams);
-    // std::cout << RED << "---"<< splitParams[1] << "---" << std::endl;
     std::string mode = "";
     Channel *channel = isChannelExisiting(channelName);
     if (!channel)

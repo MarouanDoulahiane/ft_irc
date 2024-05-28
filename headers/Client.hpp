@@ -20,7 +20,6 @@ class Client
 		std::string		user;
 		std::string		hostname;
 		std::string		realname;
-		std::string		mode;
 		std::string		line;
         std::string     Ipadd;
 		std::vector<Channel *> Channels;
@@ -33,22 +32,23 @@ class Client
 	
 	    int GetFd();
 
-	    void SetFd(int fd){sock = fd;} //-> setter for fd
+	    void SetFd(int fd){sock = fd;}
 	    void setIpAdd(std::string ipadd){Ipadd = ipadd;}
+		void setHostname(std::string hostname){this->hostname = hostname;}
 
 		void send_message(std::string msg);
 		void send_messageCH(char *msg);
 		std::string getIpadd();
-		// std::vector<Channel *> getChannels();
+		std::vector<Channel *> getChannels();
 
-		// std::string getFullname();
-
+		std::string getFullname();
+		std::string getHostname();
 		std::string getInvitedChannels();
 
 		// void disconnect();
-		// void leaveAllChannels(std::string reason);
-		// void eraseInvitedChannel(std::string channelName);
-		// void eraseChannel(std::string channelName);
+		void leaveAllChannels(std::string reason);
+		void eraseInvitedChannel(std::string channelName);
+		void eraseChannel(std::string channelName);
 
 		// bool operator == (const Client &c);
 		// bool operator != (const Client &c);

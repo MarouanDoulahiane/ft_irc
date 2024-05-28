@@ -1,7 +1,6 @@
 #include "../../headres/Server.hpp"
 ////////////////////////////////////////////////////////
 
-
 // void IRCserv::removeChannel(std::string name)
 // {
 //     Channel *channel = isChannelExisiting(name);

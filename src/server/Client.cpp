@@ -17,6 +17,8 @@ Client::Client(int sock)
 	this->registerState = false;
 }
 
+
+// Client::Client(int sock, std::string nick, std::string user, std::string hostname);
 void Client::send_messageCH(char *msg)
 {
 	write(this->sock, msg, strlen(msg));
@@ -35,6 +37,20 @@ std::string Client::getIpadd()
 	return Ipadd;
 }
 
+std::string Client::getHostname()
+{
+	return hostname;
+}
+
+void leaveAllChannels(std::string reason)
+{
+	// std::vector<Channel *>::iterator it;
+	// for (it = this->Channels.begin(); it != this->Channels.end(); it++)
+	// {
+	// 	(*it)->partClient(*this, reason);
+	// }
+}
+
 Client::~Client()
 {
     
@@ -46,6 +62,16 @@ std::string Client::getInvitedChannels()
 	for(int i = 0; i < this->invitedChannels.size(); i++)
 			ret = invitedChannels[i] + " ";
 	return ret;
+}
+
+std::vector<Channel *> Client::getChannels()
+{
+	return this->Channels;
+}
+
+std::string Client::getFullname()
+{
+	return this->nick + "!" + this->user + "@" + this->hostname;
 }
 
 
