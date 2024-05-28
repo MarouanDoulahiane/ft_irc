@@ -1,23 +1,8 @@
-#include "../headers/IRCserv.hpp"
-#include "../headers/replies.hpp"
+#include "../../headers/Server.hpp"
+#include "../../headers/channels.hpp"
 
-
-void IRCserv::parsePRIVMSG(char *msg, Client &client)
-{  
-    char *prefix = strtok(msg, " ");
-    char *target = strtok(NULL, " ");
-    char *text = strtok(NULL, "");
-    if  (!prefix || strcmp(prefix, "PRIVMSG"))
-        return ;
-    if (text && text[0] == ':')
-        text++;
-    else if (text && text[0] != ':')
-		text = strtok(text, " ");
-    if (!target || !text)
-    {
-        client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
-        return ;
-    }
+void Server::sendMSG(std::string &target, std::string &text, Client &cli)
+{
     std::vector<std::string> spTargets = split(target, ',');
     for (size_t i = 0; i < spTargets.size() ; i++)
     {
@@ -26,21 +11,61 @@ void IRCserv::parsePRIVMSG(char *msg, Client &client)
             Channel *ch = isChannelExisiting(spTargets[i]);
             if (ch) 
             {
-                if (ch->is_member(client))
-                    ch->send_message(client, PRIVMSG_FORMATCH(client.nick, client.user, this->getHostName(), ch->getName(), text));
+                if (ch->checkClient(cli))
+                    ch->sendMessageCh(cli, PRIVMSG_FORMATCH(cli.nick, cli.user, this->getHostName(), ch->getName(), text));
                 else
-                    client.send_message(ERR_CANNOTSENDTOCHAN(client.nick, spTargets[i], this->getHostName()));
+                    cli.send_message(ERR_CANNOTSENDTOCHAN(cli.nick, spTargets[i], this->getHostName()));
             }
             else
-                client.send_message(ERR_NOSUCHCHANNEL(this->getHostName(), spTargets[i], client.nick));
+                cli.send_message(ERR_NOSUCHCHANNEL(this->getHostName(), spTargets[i], cli.nick));
         }
         else
         {
-            Client *receiver = isClientExisiting(spTargets[i]);
+            Client *receiver = isClientBef(spTargets[i]);
             if (receiver)
-                receiver->send_message(PRIVMSG_FORMATUSER(client.nick, spTargets[i], text));
+                receiver->send_message(PRIVMSG_FORMATUSER(cli.nick, spTargets[i], text));
             else
-                client.send_message(ERR_NOSUCHNICK(this->getHostName(), spTargets[i], client.nick));
+                cli.send_message(ERR_NOSUCHNICK(this->getHostName(), spTargets[i], cli.nick));
         }
+    }
+}
+
+
+void Server::handlePRIVMSG(cmd &command, Client &cli)
+{
+    if (!command.buff.empty())
+    {
+        std::vector<std::string> sp = split(command.buff, ' ');
+        if (sp.size() < 3)
+        {
+            cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, this->getHostName()));
+            return ;
+        }
+        std::string target = sp[1];
+        std::string text;
+        for(int i = 2; i < sp.size(); i++)
+        {
+            text += sp[i];
+            if (i + 1 != sp.size())
+                text += " ";
+        }
+        sendMSG(target, text, cli);
+    }
+    else
+    {
+        if (command.args.size() < 3)
+        {
+            cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, this->getHostName()));
+            return ;
+        }
+        std::string target = command.args[1];
+        std::string text;
+        for(int i = 2; i < command.args.size(); i++)
+        {
+            text += command.args[i];
+            if (i + 1 != command.args.size())
+                text += " ";
+        }
+        sendMSG(target, text, cli);
     }
 }

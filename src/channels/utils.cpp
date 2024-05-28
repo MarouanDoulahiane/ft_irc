@@ -73,7 +73,15 @@ std::vector<cmd> Server::parseBuffer(std::string buff)
 
 	return commands;
 }
-
+Client *Server::isClientBef(std::string name)
+{
+	for(int i =0; i < clients.size(); i++)
+	{
+		if (clients[i].nick == name)
+			return &clients[i];
+	}
+	return NULL;
+}
 
 Client	&Server::findClient(int fd)
 {

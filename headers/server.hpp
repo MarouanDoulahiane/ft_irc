@@ -63,6 +63,7 @@ class Server
 
 		Channel *getChannelByName(std::string name);
 		Client &findClient(int fd);
+		Client *isClientBef(std::string name);
 		std::vector<cmd> parseBuffer(std::string buff);
 
 //      commands
@@ -73,6 +74,10 @@ class Server
 		void handleInvite(cmd &command, Client &cli);
 		void handleMode(cmd &command, Client &cli);
 		
+
+
+		void handlePRIVMSG(cmd &command, Client &cli);
+		void sendMSG(std::string &target, std::string &text, Client &cli);
 		// channel functions
 		Channel *isChannelExisiting(std::string name);
 		void inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client);

@@ -74,12 +74,12 @@ void Server::CloseFds()
 {
 	for(size_t i = 0; i < this->clients.size(); i++)
 	{ 
-		std::cout << RED << "Client <" << clients[i].GetFd() << "> Disconnected" << WHI << std::endl;
+		std::cout << RED << "Client: " << clients[i].GetFd() << " Disconnected" << WHI << std::endl;
 		close(clients[i].GetFd());
 	}
 	if (sockFd != -1)
 	{
-		std::cout << RED << "Server <" << sockFd << "> Disconnected" << WHI << std::endl;
+		std::cout << RED << "Server: " << sockFd << " Disconnected" << WHI << std::endl;
 		close(sockFd);
 	}
 }

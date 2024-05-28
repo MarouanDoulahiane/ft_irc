@@ -42,13 +42,13 @@ std::string Client::getHostname()
 	return hostname;
 }
 
-void leaveAllChannels(std::string reason)
+void Client::leaveAllChannels(std::string reason)
 {
-	// std::vector<Channel *>::iterator it;
-	// for (it = this->Channels.begin(); it != this->Channels.end(); it++)
-	// {
-	// 	(*it)->partClient(*this, reason);
-	// }
+	std::vector<Channel *>::iterator it;
+	for (it = this->Channels.begin(); it != this->Channels.end(); it++)
+	{
+		// (*it)->partClient(*this, reason);
+	}
 }
 
 Client::~Client()
