@@ -35,21 +35,13 @@ void Server::handlePRIVMSG(cmd &command, Client &cli)
 {
     if (!command.buff.empty())
     {
-        std::vector<std::string> sp = split(command.buff, ' ');
-        if (sp.size() < 3)
+        if (command.args.size() < 3)
         {
             cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, this->getHostName()));
             return ;
         }
-        std::string target = sp[1];
-        std::string text;
-        for(int i = 2; i < sp.size(); i++)
-        {
-            text += sp[i];
-            if (i + 1 != sp.size())
-                text += " ";
-        }
-        sendMSG(target, text, cli);
+        std::string target = command.args[1];
+        sendMSG(target, command.buff, cli);
     }
     else
     {

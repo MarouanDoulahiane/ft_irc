@@ -13,6 +13,7 @@ bool Server::Signal = false;
 
 void Server::IrcServerInit(std::string port, std::string password)
 {
+	this->IrcServhostname = "IRC-localhost";
     this->Port = atoi(port.c_str());
     if (Port >= 0 && Port <= 1023)
         throw std::out_of_range("Invalid Port");
@@ -122,13 +123,13 @@ void	Server::Registration(Client &cli, cmd &command)
 	else if (command.args[0] == "USER")
 		handleUser(cli, command);
 	if (initState == cli.registerState)
-		cli.send_message(ERR_ALREADYREGISTERED(cli.nick, cli.getHostname()));
+		cli.send_message(ERR_ALREADYREGISTERED(cli.nick, this->getHostName()));
 	if (cli.registerState == HAVE_REGISTERD)
 	{
-		cli.send_message(RPL_WELCOME(cli.nick, cli.getHostname()));
-		cli.send_message(RPL_YOURHOST(cli.nick, cli.getHostname()));
-		cli.send_message(RPL_CREATED(cli.nick, cli.getHostname()));
-		cli.send_message(RPL_MYINFO(cli.nick, cli.getHostname()));
+		cli.send_message(RPL_WELCOME(cli.nick, getHostName()));
+		cli.send_message(RPL_YOURHOST(cli.nick, getHostName()));
+		cli.send_message(RPL_CREATED(cli.nick, getHostName()));
+		cli.send_message(RPL_MYINFO(cli.nick, getHostName()));
 	}
 }
 
@@ -152,7 +153,6 @@ void Server::ReceiveNewData(int fd)
 	{ 
 		std::cout << RED << "Client " << fd << " Disconnected" << WHI << std::endl;
 		removeClient(fd);
-		cli.leaveAllChannels("Disconnected");
 		close(fd);
 	}
 	else
@@ -164,25 +164,27 @@ void Server::ReceiveNewData(int fd)
 		{
 			// PING PONG
 			if (commands[i].args.size() > 0 && commands[i].args[0] == "PING")
-				cli.send_message(RPL_PONG(cli.nick, commands[i].buff));
+				cli.send_message(RPL_PONG(getHostName(), cli.nick));
 			else if (commands[i].args.size() > 0 && commands[i].args[0] == "PONG")
-				cli.send_message(RPL_PING(cli.nick, commands[i].buff));
+				cli.send_message(RPL_PING(getHostName(), cli.nick));
 			else if (cli.registerState == HAVE_REGISTERD)
 			{
 				// commands
 				if  (commands[i].args.size() > 0 && commands[i].args[0] == "USER")
-					cli.send_message(ERR_ALREADYREGISTERED(cli.nick, cli.getHostname()));
+					cli.send_message(ERR_ALREADYREGISTERED(cli.nick, getHostName()));
 				else if  (commands[i].args.size() >= 1 && commands[i].args[0] == "JOIN")
 					handleJOIN(commands[i], cli);
 				else if  (commands[i].args.size() >= 1 && commands[i].args[0] == "INVITE")
 					handleInvite(commands[i], cli);
 				else if  (commands[i].args.size() >= 1 && commands[i].args[0] == "MODE")
 					handleMode(commands[i], cli);
+				else if ((commands[i].args.size() >= 1 && commands[i].args[0] == "PRIVMSG"))
+					handlePRIVMSG(commands[i], cli);
 			}
 			else if (commands[i].args.size() > 0 && (commands[i].args[0] == "PASS" || commands[i].args[0] == "NICK" || commands[i].args[0] == "USER"))
 				Registration(cli, commands[i]);
 			else
-				cli.send_message(ERR_NOTREGISTERED(cli.nick, cli.getHostname()));
+				cli.send_message(ERR_NOTREGISTERED(cli.nick, getHostName()));
 		}
 	}
 }
@@ -192,7 +194,7 @@ void	Server::handleUser(Client &cli, cmd &command)
 {
 	if (command.args.size() != 5)
 	{
-		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, cli.getHostname()));
+		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, getHostName()));
 		return;
 	}
 	cli.user = command.args[1];
@@ -206,16 +208,16 @@ void	Server::handleNick(Client &cli, cmd &command)
 	if (command.args.size() != 2)
 	{
 		if (command.args.size() == 1)
-			cli.send_message(ERR_NONICKNAMEGIVEN(cli.nick, cli.getHostname()));
+			cli.send_message(ERR_NONICKNAMEGIVEN(cli.nick, getHostName()));
 		else
-			cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, cli.getHostname()));
+			cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, getHostName()));
 		return;
 	}
 	for (size_t i = 0; i < clients.size(); i++)
 	{
 		if ((command.args[1][0] == ':' && clients[i].nick == command.buff) || clients[i].nick == command.args[1])
 		{
-			cli.send_message(ERR_NICKNAMEINUSE(cli.nick, cli.getHostname()));
+			cli.send_message(ERR_NICKNAMEINUSE(cli.nick, getHostName()));
 			return;
 		}
 	}
@@ -223,7 +225,7 @@ void	Server::handleNick(Client &cli, cmd &command)
 	{
 		if (isspace(command.args[1][i]) || command.args[1][i] == ':' || command.args[1][i] == '#')
 		{
-			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, cli.getHostname()));
+			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, getHostName()));
 			return;
 		}
 	}
@@ -231,7 +233,7 @@ void	Server::handleNick(Client &cli, cmd &command)
 	{
 		if (isspace(command.buff[i]) || command.buff[i] == ':' || command.buff[i] == '#')
 		{
-			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, cli.getHostname()));
+			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, getHostName()));
 			return;
 		}
 	}
@@ -246,7 +248,7 @@ void	Server::handlePass(Client &cli, cmd &command)
 {
 	if (command.args.size() != 2 && command.buff.size() == 0)
 	{
-		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, cli.getHostname()));
+		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, getHostName()));
 		return;
 	}
 	else if (command.args.size() == 2 && command.args[1][0] != ':' && command.args[1] == pass)
@@ -259,7 +261,7 @@ void	Server::handlePass(Client &cli, cmd &command)
 		cli.registerState |= HAVE_PASS;
 		return;
 	}
-	cli.send_message(ERR_PASSWDMISMATCH(cli.nick, cli.getHostname()));
+	cli.send_message(ERR_PASSWDMISMATCH(cli.nick, getHostName()));
 }
 
 ///////////////////////////////////
