@@ -17,6 +17,20 @@ Client::Client(int sock)
 	this->registerState = false;
 }
 
+void Client::eraseChannel(std::string channel)
+{
+	std::vector<Channel *>::iterator it;
+	for (it = this->Channels.begin(); it != this->Channels.end(); it++)
+	{
+		if ((*it)->getName() == channel)
+		{
+			this->Channels.erase(it);
+			return;
+		}
+	}
+
+}
+
 
 // Client::Client(int sock, std::string nick, std::string user, std::string hostname);
 void Client::send_messageCH(char *msg)

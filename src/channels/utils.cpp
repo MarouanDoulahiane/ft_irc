@@ -96,21 +96,33 @@ Client	&Server::findClient(int fd)
 //lol
 void Server::removeClient(int fd)
 {
-	for(size_t i = 0; i < fds.size(); i++)
+	// remove client from all channels he is in
+	Client &cli = findClient(fd);
+	for (unsigned int i = 0; i < this->channels.size(); i++)
 	{
-		if (fds[i].fd == fd)
-			{
-				fds.erase(fds.begin() + i); 
-				break;
-			}
+		if (channels[i]->nickInChannel(cli.nick))
+			channels[i]->deleteClient(cli);
 	}
-	for(size_t i = 0; i < clients.size(); i++)
+	// remove client from clients list
+	for (unsigned int i = 0; i < clients.size(); i++)
 	{
 		if (clients[i].GetFd() == fd)
-			{clients.erase(clients.begin() + i); 
-			break;}
+		{
+			clients.erase(clients.begin() + i);
+			break;
+		}
+	}
+	// remove client from fds list
+	for (unsigned int i = 0; i < fds.size(); i++)
+	{
+		if (fds[i].fd == fd)
+		{
+			fds.erase(fds.begin() + i);
+			break;
+		}
 	}
 
+	close(fd);
 }
 
 

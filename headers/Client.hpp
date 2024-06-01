@@ -16,8 +16,8 @@ class Client
 {
 		int				sock;
         std::string     Ipadd;
-		std::vector<Channel *> Channels;
 	public:
+		std::vector<Channel *> Channels;
 		Client();
 		~Client();
 		Client(int sock);

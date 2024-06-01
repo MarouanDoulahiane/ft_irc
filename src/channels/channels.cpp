@@ -121,6 +121,7 @@ void Channel::deleteClient(Client &client)
         if (it->nick == client.nick)
         {
             this->clients.erase(it);
+            client.eraseChannel(this->name);
             return;
         }
     }

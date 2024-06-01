@@ -152,7 +152,6 @@ void Server::ReceiveNewData(int fd)
 	{ 
 		std::cout << RED << "Client " << fd << " Disconnected" << WHI << std::endl;
 		removeClient(fd);
-		close(fd);
 	}
 	else
 	{
