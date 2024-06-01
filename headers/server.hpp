@@ -74,6 +74,7 @@ class Server
 		void handleMode(cmd &command, Client &cli);
 		void handlePRIVMSG(cmd &command, Client &cli);
 		void handleTOPIC(cmd &command, Client &cli);
+		void handleKICK(cmd &command, Client &cli);
 		// channel functions
 		Channel *isChannelExisiting(std::string name);
 		void sendMSG(std::string &target, std::string &text, Client &cli);

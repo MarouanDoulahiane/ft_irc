@@ -54,7 +54,6 @@ class Channel
         //boolen functs
         bool isModeSet(std::string mode);
         bool isInviteOnly();
-        bool isOperator(std::string nickname);
         bool isTopicRestrictionsSet();
         bool isUserLimitSet();
         bool isKeySet();

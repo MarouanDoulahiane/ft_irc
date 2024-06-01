@@ -347,11 +347,6 @@ bool Channel::isTopicRestrictionsSet()
 }
 
 
-bool Channel::isOperator(std::string nickname)
-{
-    return _isOperator;
-}
-
 bool Channel::isInviteOnly()
 {
     return isInviteOnlySet;

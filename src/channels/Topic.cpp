@@ -25,7 +25,7 @@ void	Server::handleTOPIC(cmd &command, Client &cli)
 		cli.send_message(RPL_TOPIC(cli.nick, getHostName(), channel->getName(), channel->getTopic()));
 		return;
 	}
-	if (channel->isTopicRestrictionsSet() == true && channel->isOperator(cli.nick) == false)
+	if (channel->isTopicRestrictionsSet() == true && channel->isOnOperatorList(cli.GetFd()) == false)
 	{
 		cli.send_message(ERR_CHANOPRIVSNEEDED(cli.nick, getHostName(), channel->getName()));
 		return;
