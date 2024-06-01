@@ -52,6 +52,8 @@ bool Channel::add(Client &client, std::string pass)
         throw ClientErrMsgException(ERR_INVITEONLY(client.nick, this->srv_hostname), client);
     else deleteInvitedClient(client);
     this->clients.push_back(client);
+    if (this->clients.size() == 1)
+        this->setOperator(client);
     client.getChannels().push_back(this);
     return true;
 }
@@ -82,34 +84,33 @@ void Channel::addOperator(const std::string& nickname, std::string hostName, Cli
 
 void Channel::removeOperator(const std::string& nickname, std::string hostName, Client &client)
 {
-    if (nickInChannel(nickname) == true)
+    if (this->isOnOperatorList(client.GetFd()))
     {
-
-        std::vector<Client>::iterator it;
-        for (it = this->clients.begin(); it != this->clients.end(); it++)
+        for (unsigned int i = 0; i < this->Operators.size(); i++)
         {
-            if (it->nick == nickname)
+            if (this->Operators[i] == client.GetFd())
             {
-                deleteOperator(it->GetFd());
+                this->Operators.erase(this->Operators.begin() + i);
                 this->sendMessageCh(RPL_MODEISOP(name, hostName, "-o", nickname));
-                client.send_message(RPL_YOUREOPER(hostName, client.nick));
-                // it->send_message(ERR_CHANOPRIVSNEEDED(it->nick, hostName, this->getName()));
-                this->_isOperator = false;
+                client.send_message(RPL_MODEISOP(name, hostName, "-o", nickname));
                 return;
             }
         }
     }
     else
-        client.send_message(ERR_USERNOTINCHANNEL(hostName,  this->getName()));
+        client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, hostName, this->getName()));
 }
 
 void Channel::deleteOperator(int fd)
 {
-    std::vector<int>::iterator it;
-    for (it = this->Operators.begin(); it != this->Operators.end(); it++)
+    for (unsigned int i = 0; i < this->Operators.size(); i++)
     {
-        if (*it == fd)
-            this->Operators.erase(it);
+        if (this->Operators[i] == fd)
+        {
+            std::cout << "Operator deleted " << std::endl;
+            this->Operators.erase(this->Operators.begin() + i);
+            return;
+        }
     }
 }
 
@@ -188,7 +189,7 @@ void Channel::setInviteOnly(bool setFlag)
     isInviteOnlySet = setFlag;
 }
 
-void Channel::setOperator(Client &client, bool setFlag)
+void Channel::setOperator(Client &client)
 {
     this->Operators.push_back(client.GetFd());
 }

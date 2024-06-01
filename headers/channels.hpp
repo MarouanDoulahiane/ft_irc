@@ -85,7 +85,7 @@ class Channel
         void setUserLimit(int limit);
         void setTopicRestrictions(bool setFlag);
         void setInviteOnly(bool setFlag);
-        void setOperator(Client &client, bool setFlag);
+        void setOperator(Client &client);
         void setMode(const std::string& newMode);
 
 

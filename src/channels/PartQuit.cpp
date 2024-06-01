@@ -1,40 +1,36 @@
-#include "../../headres/Server.hpp"
-////////////////////////////////////////////////////////
+#include "../../headers/Server.hpp"
 
-// void IRCserv::removeChannel(std::string name)
-// {
-//     Channel *channel = isChannelExisiting(name);
-//     if (!channel)
-//         return;
-//     std::vector<Channel *>::iterator it;
-//     for (it = this->channels.begin(); it < this->channels.end(); it++)
-//     {
-//         if ((*it)->getName() == name)
-//         {
-//             if ((*it)->getClients().size() > 0)
-//             {
-//                 std::vector<Client>::iterator itc;
-//                 for (itc = (*it)->getClients().begin(); itc < (*it)->getClients().end(); itc++)
-//                 {
-//                     (*it)->partClient(*itc, "");
-//                 }
-//             }
-//             this->channels.erase(it);
-//             delete channel;
-//             return;
-//         }
-//     }
-// }
-
-// void IRCserv::partChannel(std::string name,char *_reason, Client &client)
-// {
-//     Channel *channel = isChannelExisiting(name);
-//     if (!channel)
-//         client.send_message(ERR_NOSUCHCHANNEL(hostname, name, client.nick));
-//     if (!channel->is_member(client))
-//         client.send_message(ERR_NOTONCHANNEL(hostname, name));
-//     std::string reason("");
-//     if (_reason)
-//         reason = _reason;
-//     channel->partClient(client, reason);
-// }
+void	Server::handlePART(cmd &command, Client &cli)
+{
+	if (command.args.size() < 2)
+	{
+		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, getHostName()));
+		return;
+	}
+	Channel *channel = getChannelByName(command.args[1]);
+	if (!channel)
+	{
+		cli.send_message(ERR_NOSUCHCHANNEL(cli.nick, command.args[1], getHostName()));
+		return;
+	}
+	if (channel->nickInChannel(cli.nick) == false)
+	{
+		cli.send_message(ERR_NOTONCHANNEL(cli.nick, getHostName()));
+		return;
+	}
+	channel->deleteClient(cli);
+	cli.eraseChannel(channel->getName());
+	if (channel->isOnOperatorList(cli.GetFd()) == true)
+	{
+		channel->removeOperator(cli.nick, this->getHostName(), cli);
+		if (channel->Operators.size() == 0 && channel->clients.size() > 0)
+		{
+			channel->setOperator(channel->clients[0]);
+			channel->sendMessageCh(RPL_MODEISOP(channel->getName(), this->getHostName(), "+o", channel->clients[0].nick));
+			channel->clients[0].send_message(RPL_YOUREOPER(this->getHostName(), channel->clients[0].nick));
+		}
+	
+	}
+	channel->sendMessageCh(RPL_PART(this->getHostName(), cli.nick, cli.user, command.args[1], command.buff));
+	cli.send_message(RPL_PART(this->getHostName(), cli.nick, cli.user, command.args[1], command.buff));
+}

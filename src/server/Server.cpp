@@ -182,6 +182,8 @@ void Server::ReceiveNewData(int fd)
 					handleTOPIC(commands[i], cli);
 				else if ((commands[i].args.size() >= 1 && commands[i].args[0] == "KICK"))
 					handleKICK(commands[i], cli);
+				else if ((commands[i].args.size() >= 1 && commands[i].args[0] == "PART"))
+					handlePART(commands[i], cli);
 			}
 			else if (commands[i].args.size() > 0 && (commands[i].args[0] == "PASS" || commands[i].args[0] == "NICK" || commands[i].args[0] == "USER"))
 				Registration(cli, commands[i]);
@@ -190,6 +192,7 @@ void Server::ReceiveNewData(int fd)
 		}
 	}
 }
+
 
 
 void	Server::handleUser(Client &cli, cmd &command)
