@@ -1,5 +1,7 @@
 #include "../../headers/Server.hpp"
 #include "../../headers/channels.hpp"
+
+
 void	Server::handleTOPIC(cmd &command, Client &cli)
 {
 	if (command.args.size() < 2 ||( command.args[1].size() >= 1 && command.args[1][0] != '#'))

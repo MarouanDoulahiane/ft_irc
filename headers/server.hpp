@@ -23,6 +23,7 @@ class Channel;
 
 struct	cmd 
 {
+	bool useBuffer(int n);
 	std::vector<std::string> args;
 	std::string	buff;
 };
@@ -72,9 +73,7 @@ class Server
 		void handleInvite(cmd &command, Client &cli);
 		void handleMode(cmd &command, Client &cli);
 		void handlePRIVMSG(cmd &command, Client &cli);
-		
-
-
+		void handleTOPIC(cmd &command, Client &cli);
 		// channel functions
 		Channel *isChannelExisiting(std::string name);
 		void sendMSG(std::string &target, std::string &text, Client &cli);
