@@ -24,8 +24,7 @@ void Server::handleMode(cmd &command, Client &cli)
         applyModeFlags(target, flags, addParams, cli);
     }
     if (i == 3)
-        applyModeFlags(target, flags, addParams, cli);
-    
+        applyModeFlags(target, flags, addParams, cli); // ?
 }
 
 void FInviteOnly(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
@@ -70,7 +69,6 @@ void FUserLimit(Channel* channel, bool setFlag,  std::string& additionalParams, 
             {
                 channel->setUserLimit(0);
                 channel->sendMessageCh(RPL_MODEISLIMIT(channel->getName(), hostName, "-l", "0"));// 3ndak
-
             }
         }
     }
@@ -134,7 +132,7 @@ void Server::applyModeFlags(std::string channelName, std::string modeFlags, std:
         client.send_message(ERR_NOSUCHCHANNEL(this->getHostName(), channelName, client.nick));
         return;
     }
-    if (channel->isOnOperatorList(client.sock) == false)
+    if (channel->isOnOperatorList(client.GetFd()) == false)
     {
         client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, this->getHostName(), channel->getName()));
         return ;
@@ -191,5 +189,4 @@ void Server::applyModeFlags(std::string channelName, std::string modeFlags, std:
                 client.send_message(ERR_UNKNOWNMODE(client.nick, this->IrcServhostname, channelName, flag));
         }
     }
-    
 }

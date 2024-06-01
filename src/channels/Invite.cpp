@@ -29,7 +29,7 @@ void	Server::handleInvite(cmd &command, Client &cli)
 		cli.send_message(ERR_NOTONCHANNEL(this->getHostName(), channel));
 		return;
 	}
-	if (ch->isInviteOnly() && !ch->isOnOperatorList(cli.sock))
+	if (ch->isInviteOnly() && !ch->isOnOperatorList(cli.GetFd()))
 	{
 		cli.send_message(ERR_CHANOPRIVSNEEDED(cli.nick, this->getHostName(), channel));
 		return;

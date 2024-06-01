@@ -1,69 +1,50 @@
-void IRCserv::handleTopic(char *msg, Client &client)
+#include "../../headers/Server.hpp"
+#include "../../headers/channels.hpp"
+void	Server::handleTOPIC(cmd &command, Client &cli)
 {
-	char *part = strtok(msg, " ");
-	bool clear = false;
-	if (strcmp("TOPIC", part))
-		return;
-	char *channel = strtok(NULL, " ");
-	char *topic = strtok(NULL, "");
-	if (topic && topic[0] == ':')
+	if (command.args.size() < 2 ||( command.args[1].size() >= 1 && command.args[1][0] != '#'))
 	{
-		clear = true;
-		topic++;
+		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, getHostName()));
+		return;
 	}
-	else if (topic && topic[0] != ':')
-		topic = strtok(topic, " ");
+	Channel *channel = getChannelByName(command.args[1]);
 	if (!channel)
 	{
-		client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
+		cli.send_message(ERR_NOSUCHCHANNEL(cli.nick, command.args[1], getHostName()));
 		return;
 	}
-	Channel *ch = isChannelExisiting(channel);
-	if (!ch)
+	if (channel->nickInChannel(cli.nick) == false)
 	{
-		client.send_message(ERR_NOSUCHCHANNEL(this->hostname, client.nick, channel));
+		cli.send_message(ERR_NOTONCHANNEL(cli.nick, getHostName()));
 		return;
 	}
-	if (!ch->isClientOnChannel(client))
+	if (command.args.size() == 2)
 	{
-		client.send_message(ERR_NOTONCHANNEL(this->getHostName(), channel));
+		cli.send_message(RPL_TOPIC(cli.nick, getHostName(), channel->getName(), channel->getTopic()));
 		return;
 	}
-	if (!topic && clear)
+	if (channel->isTopicRestrictionsSet() == true && channel->isOperator(cli.nick) == false)
 	{
-		if (ch->isTopicSet && ch->isFdOperator(client.sock))
-		{
-			ch->setTopic("");
-			client.send_message(RPL_TOPIC(this->hostname, client.nick, channel, ch->getTopic()));
-		}
-		else if (!ch->isTopicSet)
-		{
-			ch->setTopic("");
-			client.send_message(RPL_TOPIC(this->getHostName(), client.nick, channel, ch->getTopic()));
-		}
-		else
-			client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, this->getHostName(), channel));
+		cli.send_message(ERR_CHANOPRIVSNEEDED(cli.nick, getHostName(), channel->getName()));
+		return;
 	}
-	else if (!topic && !clear)
+	std::cout << "buff: " << command.buff << " " << command.useBuffer(2) << std::endl;
+	if (command.useBuffer(2))
 	{
-		if (ch->getTopic().size() > 0)
-			client.send_message(RPL_TOPIC(client.nick, this->hostname, channel, ch->getTopic()));
-		else
-			client.send_message(RPL_NOTOPIC(client.nick, this->hostname, channel));
+		std::cout << "buff: " << command.buff << std::endl;
+		channel->setTopic(command.buff);
+		std::cout << "topic: " << channel->getTopic() << std::endl;
+
 	}
 	else
-	{
-		if (ch->isTopicSet && ch->isFdOperator(client.sock))
-		{
-			ch->setTopic(topic);
-			client.send_message(RPL_TOPIC(client.nick, this->hostname, channel ,ch->getTopic()));
-		}
-		else if (!ch->isTopicSet)
-		{
-			ch->setTopic(topic);
-			client.send_message(RPL_TOPIC(client.nick, this->hostname, ch->getName(), ch->getTopic()));
-		}
-		else
-			client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, this->getHostName(), channel));
-	}
+		channel->setTopic(command.args[2]);
+	channel->sendMessageCh(RPL_SETTOPIC(cli.nick, getHostName(), channel->getName(), channel->getTopic()));
+}
+
+
+bool	cmd::useBuffer(int n)
+{
+	if (args.size() >= 2 && args[n].size() > 0 && args[n][0] == ':')
+		return true;
+	return false;
 }

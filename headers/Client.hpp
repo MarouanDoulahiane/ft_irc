@@ -14,36 +14,35 @@ class Channel;
 
 class Client
 {
-	public:
-		std::string		nick;
 		int				sock;
-		std::string		user;
-		std::string		hostname;
-		std::string		realname;
-		std::string		line;
         std::string     Ipadd;
 		std::vector<Channel *> Channels;
-		std::vector<std::string> invitedChannels;
-		// just a flag as state of registration
-		int			registerState;
+	public:
 		Client();
 		~Client();
 		Client(int sock);
+		std::string		nick;
+		std::string		hostname;
+		std::string		user;
+		std::string		line;
+		std::string		realname;
+		std::vector<std::string> invitedChannels;
+		int			registerState;		//flag as state of registration
 	
-	    int GetFd();
 
-	    void SetFd(int fd){sock = fd;}
-	    void setIpAdd(std::string ipadd){Ipadd = ipadd;}
-		void setHostname(std::string hostname){this->hostname = hostname;}
+	    void SetFd(int fd);
+	    void setIpAdd(std::string ipadd);
+		void setHostname(std::string hostname);
 
 		void send_message(std::string msg);
 		void send_messageCH(char *msg);
-		std::string getIpadd();
-		std::vector<Channel *> getChannels();
 
+	    int GetFd();
 		std::string getFullname();
+		std::string getIpadd();
 		std::string getHostname();
 		std::string getInvitedChannels();
+		std::vector<Channel *> getChannels();
 
 		// void disconnect();
 		void leaveAllChannels(std::string reason);

@@ -75,6 +75,21 @@ std::string Client::getFullname()
 }
 
 
+void Client::SetFd(int fd)
+{
+	sock = fd;
+}
+
+void Client::setHostname(std::string hostname)
+{
+	this->hostname = hostname;
+}
+
+void Client::setIpAdd(std::string ipadd)
+{
+	Ipadd = ipadd;
+}
+
 ///////// need change after
 
 ClientErrMsgException::ClientErrMsgException(std::string msg, Client &client) throw() : _cmessage(msg), _client(client)

@@ -51,5 +51,5 @@ void IRCserv::handleKick(char *msg, Client &client)
 		reasonStr = reasonStr.substr(1);
 	ch->send_message(RPL_KICK(client.nick, client.user, this->getHostName(), channel, kicked->nick, reasonStr));
 	kicked->eraseChannel(ch->getName());
-	ch->eraseClient(*kicked);
+	ch->deleteClient(*kicked);
 }

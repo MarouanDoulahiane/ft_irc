@@ -14,7 +14,7 @@ Channel::Channel(std::string name, std::string pass, Client &client, Server *srv
     {
         this->isPasswordSet = false;
         this->add(client, pass);
-        this->Operators.push_back(client.sock);
+        this->Operators.push_back(client.GetFd());
         this->TopicNicksetter = client.nick;
         this->TopicUsersetter = client.user;
         this->TopicTimestamp = time(NULL);
@@ -26,7 +26,7 @@ Channel::Channel(std::string name, std::string pass, Client &client, Server *srv
         this->TopicTimestamp = time(NULL);
         this->isPasswordSet = true;
         this->password = pass;
-        this->Operators.push_back(client.sock);
+        this->Operators.push_back(client.GetFd());
         this->add(client, pass);
         this->setMode("+k");// debug here double check 
     }
@@ -52,7 +52,7 @@ bool Channel::add(Client &client, std::string pass)
         throw ClientErrMsgException(ERR_INVITEONLY(client.nick, this->srv_hostname), client);
     else deleteInvitedClient(client);
     this->clients.push_back(client);
-    client.Channels.push_back(this);
+    client.getChannels().push_back(this);
     return true;
 }
 
@@ -67,7 +67,7 @@ void Channel::addOperator(const std::string& nickname, std::string hostName, Cli
         {
             if (it->nick == nickname)
             {
-                this->Operators.push_back(it->sock);
+                this->Operators.push_back(it->GetFd());
                 std::cout << "Operator added " << std::endl;
                 this->sendMessageCh(RPL_MODEISOP(name, hostName, "+o", nickname));
                 client.send_message(RPL_YOUREOPER(hostName, client.nick));
@@ -90,7 +90,7 @@ void Channel::removeOperator(const std::string& nickname, std::string hostName, 
         {
             if (it->nick == nickname)
             {
-                deleteOperator(it->sock);
+                deleteOperator(it->GetFd());
                 this->sendMessageCh(RPL_MODEISOP(name, hostName, "-o", nickname));
                 client.send_message(RPL_YOUREOPER(hostName, client.nick));
                 // it->send_message(ERR_CHANOPRIVSNEEDED(it->nick, hostName, this->getName()));
@@ -189,7 +189,7 @@ void Channel::setInviteOnly(bool setFlag)
 
 void Channel::setOperator(Client &client, bool setFlag)
 {
-    this->Operators.push_back(client.sock);
+    this->Operators.push_back(client.GetFd());
 }
 
 
@@ -210,7 +210,7 @@ std::string Channel::getListClients()
     {
         if (it != this->clients.begin())
             str += " ";
-        if (this->isOnOperatorList((it)->sock))
+        if (this->isOnOperatorList((it)->GetFd()))
             str += "@";
         str += (it)->nick;
     }

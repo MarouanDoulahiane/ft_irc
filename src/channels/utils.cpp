@@ -87,7 +87,7 @@ Client	&Server::findClient(int fd)
 {
 	for (unsigned int i = 0; i < clients.size(); i++)
 	{
-		if (clients[i].sock == fd)
+		if (clients[i].GetFd() == fd)
 			return clients[i];
 	}
 	CloseFds();
