@@ -1,55 +1,40 @@
-void IRCserv::handleKick(char *msg, Client &client)
+#include "../../headers/Server.hpp"
+
+
+void Server::handleKICK(cmd &command, Client &cli)
 {
-	char *part = strtok(msg, " ");
-	if (strcmp("KICK", part))
-		return;
-	char *channel = strtok(NULL, " ");
-	char *nick = strtok(NULL, " ");
-	char *reason = strtok(NULL, "");
-	if (!channel || !nick)
+	if (command.args.size() < 3)
 	{
-		client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
+		cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, getHostName()));
 		return;
 	}
-	Channel *ch = isChannelExisiting(channel);
-	if (!ch)
+	Channel *chan = getChannelByName(command.args[1]);
+	if (chan == NULL)
 	{
-		client.send_message(ERR_NOSUCHCHANNEL(client.nick, this->getHostName(), channel));
+		cli.send_message(ERR_NOSUCHCHANNEL(cli.nick, getHostName(), command.args[1]));
 		return;
 	}
-	if (!ch->isClientOnChannel(client))
+	if (chan->nickInChannel(cli.nick) == false)
 	{
-		client.send_message(ERR_NOTONCHANNEL(this->getHostName(), channel));
+		cli.send_message(ERR_NOTONCHANNEL(getHostName(), command.args[1]));
 		return;
 	}
-	if (!ch->isNickInChannel(nick))
+	if (chan->isOnOperatorList(cli.GetFd()) == false)
 	{
-		client.send_message(ERR_USERNOTINCHANNEL(this->getHostName(), channel));
+		cli.send_message(ERR_CHANOPRIVSNEEDED(cli.nick, getHostName(), command.args[1]));
 		return;
 	}
-	if (!ch->isFdOperator(client.sock))
+	Client *client = isClientBef(command.args[2]);
+	if (client == NULL)
 	{
-		client.send_message(ERR_NOTOP(this->getHostName(), channel));
+		cli.send_message(ERR_NOSUCHNICK(cli.nick, getHostName(), command.args[2]));
 		return;
 	}
-	Client *kicked = NULL;
-	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
+	if (chan->nickInChannel(client->nick) == false)
 	{
-		if (it->second.nick == nick)
-		{
-			kicked = &it->second;
-			break;
-		}
-	}
-	if (!kicked)
-	{
-		client.send_message(ERR_NOSUCHNICK(this->getHostName(), channel, nick));
+		cli.send_message(ERR_USERNOTINCHANNEL(cli.nick, command.args[2]));
 		return;
 	}
-	std::string reasonStr = (!reason? "" : std::string(reason)); // the error was here, because it get aborded if reason is `null`
-	if (reasonStr.size() > 0 && reasonStr[0] == ':')
-		reasonStr = reasonStr.substr(1);
-	ch->send_message(RPL_KICK(client.nick, client.user, this->getHostName(), channel, kicked->nick, reasonStr));
-	kicked->eraseChannel(ch->getName());
-	ch->deleteClient(*kicked);
+	chan->deleteClient(*client);
+	chan->sendMessageCh(RPL_KICK(cli.nick, cli.user, getHostName(), command.args[1], command.args[2], command.buff));
 }

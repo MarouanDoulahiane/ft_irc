@@ -7,6 +7,7 @@ SRC		=		src/server/Server.cpp	\
 				src/channels/JOIN.cpp \
 				src/channels/modeChannels.cpp \
 				src/channels/PRVmsg.cpp \
+				src/channels/Kick.cpp \
 				src/main.cpp \
 
 
