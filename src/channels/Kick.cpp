@@ -35,6 +35,6 @@ void Server::handleKICK(cmd &command, Client &cli)
 		cli.send_message(ERR_USERNOTINCHANNEL(cli.nick, command.args[2]));
 		return;
 	}
-	chan->deleteClient(*client);
 	chan->sendMessageCh(RPL_KICK(cli.nick, cli.user, getHostName(), command.args[1], command.args[2], command.buff));
+	chan->deleteClient(*client);
 }

@@ -86,9 +86,7 @@ void FOperator(Channel* channel, bool setFlag,  std::string& additionalParams, C
         if (additionalParams.empty())
             client.send_message(ERR_NEEDMOREPARAMS(client.nick, hostName));
         else
-        {
             channel->addOperator(additionalParams, hostName, client);
-        }
 
     }
     else

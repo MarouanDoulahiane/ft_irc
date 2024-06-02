@@ -30,12 +30,9 @@ void	Server::handleTOPIC(cmd &command, Client &cli)
 		cli.send_message(ERR_CHANOPRIVSNEEDED(cli.nick, getHostName(), channel->getName()));
 		return;
 	}
-	std::cout << "buff: " << command.buff << " " << command.useBuffer(2) << std::endl;
 	if (command.useBuffer(2))
 	{
-		std::cout << "buff: " << command.buff << std::endl;
 		channel->setTopic(command.buff);
-		std::cout << "topic: " << channel->getTopic() << std::endl;
 
 	}
 	else

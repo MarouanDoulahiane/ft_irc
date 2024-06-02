@@ -27,6 +27,7 @@ class Client
 		std::string		line;
 		std::string		realname;
 		std::vector<std::string> invitedChannels;
+		bool			is_quit;
 		int			registerState;		//flag as state of registration
 	
 

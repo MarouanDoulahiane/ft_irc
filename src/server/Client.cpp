@@ -9,12 +9,14 @@ Client::Client()
 	this->registerState = false;
 	std::string nickname = "";
 	std::string username = "";
+	is_quit = false;
 }
 
 Client::Client(int sock)
 {
 	this->sock = sock;
 	this->registerState = false;
+	this->is_quit = false;
 }
 
 void Client::eraseChannel(std::string channel)

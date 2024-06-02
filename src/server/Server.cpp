@@ -148,7 +148,7 @@ void Server::ReceiveNewData(int fd)
 	memset(buff, 0, sizeof(buff));
 	Client &cli = findClient(fd);
 	ssize_t bytes = recv(fd, buff, sizeof(buff) - 1 , 0);
-	if(bytes <= 0)
+	if(bytes <= 0 || fd == -1)
 	{ 
 		std::cout << RED << "Client " << fd << " Disconnected" << WHI << std::endl;
 		removeClient(fd);
@@ -157,7 +157,7 @@ void Server::ReceiveNewData(int fd)
 	{
 		buff[bytes] = '\0';
 		std::vector<cmd>	commands = this->parseBuffer(buff);
-		printVectorCmd(commands);
+		// printVectorCmd(commands);
 		for (size_t i = 0; i < commands.size(); i++)
 		{
 			// PING PONG
@@ -184,6 +184,8 @@ void Server::ReceiveNewData(int fd)
 					handleKICK(commands[i], cli);
 				else if ((commands[i].args.size() >= 1 && commands[i].args[0] == "PART"))
 					handlePART(commands[i], cli);
+				else if ((commands[i].args.size() >= 1 && commands[i].args[0] == "QUIT"))
+					handleQUIT(commands[i], cli);
 			}
 			else if (commands[i].args.size() > 0 && (commands[i].args[0] == "PASS" || commands[i].args[0] == "NICK" || commands[i].args[0] == "USER"))
 				Registration(cli, commands[i]);

@@ -121,17 +121,5 @@ void Server::removeClient(int fd)
 			break;
 		}
 	}
-
 	close(fd);
 }
-
-
-// std::string getReasonForResponse(char *reason)
-// {
-//     if (!reason)
-//         return (std::string(""));
-//     std::string resp(" :");
-//     resp += std::string(reason);
-//     return resp;
-// }
-

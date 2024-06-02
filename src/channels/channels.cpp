@@ -52,8 +52,6 @@ bool Channel::add(Client &client, std::string pass)
         throw ClientErrMsgException(ERR_INVITEONLY(client.nick, this->srv_hostname), client);
     else deleteInvitedClient(client);
     this->clients.push_back(client);
-    if (this->clients.size() == 1)
-        this->setOperator(client);
     client.getChannels().push_back(this);
     return true;
 }
@@ -70,7 +68,6 @@ void Channel::addOperator(const std::string& nickname, std::string hostName, Cli
             if (it->nick == nickname)
             {
                 this->Operators.push_back(it->GetFd());
-                std::cout << "Operator added " << std::endl;
                 this->sendMessageCh(RPL_MODEISOP(name, hostName, "+o", nickname));
                 client.send_message(RPL_YOUREOPER(hostName, client.nick));
                 this->_isOperator = true;
@@ -103,12 +100,12 @@ void Channel::removeOperator(const std::string& nickname, std::string hostName, 
 
 void Channel::deleteOperator(int fd)
 {
-    for (unsigned int i = 0; i < this->Operators.size(); i++)
+    std::vector<int>::iterator it;
+    for (it = this->Operators.begin(); it < this->Operators.end(); it++)
     {
-        if (this->Operators[i] == fd)
+        if (*it == fd)
         {
-            std::cout << "Operator deleted " << std::endl;
-            this->Operators.erase(this->Operators.begin() + i);
+            this->Operators.erase(it);
             return;
         }
     }
@@ -123,6 +120,14 @@ void Channel::deleteClient(Client &client)
         {
             this->clients.erase(it);
             client.eraseChannel(this->name);
+            if (this->isOnOperatorList(client.GetFd()))
+            {
+                this->deleteOperator(client.GetFd());
+                if (this->Operators.size() == 0 && this->clients.size() > 0)
+                    this->setOperator(this->clients[0]);
+            }
+            if (checkInvitedClient(client))
+                this->deleteInvitedClient(client);
             return;
         }
     }
@@ -136,7 +141,6 @@ void Channel::deleteInvitedClient(Client &client)
         if (it->nick == client.nick)
         {
             this->InvitedClients.erase(it);
-            // client.eraseInvitedChannel(this->name);
             return;
         }
     }
@@ -191,7 +195,12 @@ void Channel::setInviteOnly(bool setFlag)
 
 void Channel::setOperator(Client &client)
 {
+    if (this->isOnOperatorList(client.GetFd()))
+        return;
     this->Operators.push_back(client.GetFd());
+    this->sendMessageCh(RPL_MODEISOP(name, this->srv_hostname, "+o", client.nick));
+    client.send_message(RPL_YOUREOPER(this->srv_hostname, client.nick));
+    this->_isOperator = true;
 }
 
 

@@ -41,7 +41,6 @@ void Server::addNewChannel(std::string name, std::string pass, Client &client)
     }
     else
     {
-        std::cout << "Channel existing" << std::endl;
         try
         {
             channel->add(client, pass);
@@ -116,7 +115,6 @@ void Server::handleJOIN(cmd &command, Client &cli)
 			addNewChannel(channels[i],"",cli);
 		if (it != keys.end())
 		{
-            std::cout << *it << std::endl;
 			addNewChannel(channels[i], *it, cli);
             it++;
 		}
