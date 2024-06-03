@@ -63,6 +63,8 @@ class Channel
         bool isOnOperatorList(int fd);
         bool validChannelName(std::string name);
 
+        void sendMessageChExclude(std::string msg, std::string nick);
+
         // check and update ^_^
         bool add(Client &client, std::string pass);
         void addInvited(Client &client);
@@ -101,6 +103,7 @@ class Channel
         std::string getTopicNickSetter();
         std::string getTopicTimestamp();
         std::string getTopicUserSetter();
+        void updateNick(std::string oldNick, std::string newNick);
 
 };
 

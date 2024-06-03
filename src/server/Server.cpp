@@ -9,6 +9,24 @@ Server::Server()
 	this->IrcServhostname = "IRC-localhost";
 }
 
+bool cmd::isValidNick()
+{
+	if (args.size() < 2)
+		return false;
+	std::string nick = useBuffer(1) ? buff : args[1];
+
+	if (nick.size() < 1 || nick.size() > 9)
+		return false;
+	for (size_t i = 0; i < nick.size(); i++)
+	{
+		if (i == 0 && !std::isalpha(nick[i]))
+			return false;
+		if (!std::isalnum(nick[i]) && nick[i] != '_')
+			return false;
+	}
+	return true;
+}
+
 bool Server::Signal = false;
 
 void Server::IrcServerInit(std::string port, std::string password)
@@ -157,7 +175,7 @@ void Server::ReceiveNewData(int fd)
 	{
 		buff[bytes] = '\0';
 		std::vector<cmd>	commands = this->parseBuffer(buff);
-		// printVectorCmd(commands);
+		printVectorCmd(commands);
 		for (size_t i = 0; i < commands.size(); i++)
 		{
 			// PING PONG
@@ -170,6 +188,8 @@ void Server::ReceiveNewData(int fd)
 				// commands
 				if  (commands[i].args.size() > 0 && commands[i].args[0] == "USER")
 					cli.send_message(ERR_ALREADYREGISTERED(cli.nick, getHostName()));
+				if (commands[i].args.size() > 0 && commands[i].args[0] == "NICK")
+					handleNick(cli, commands[i]);
 				else if  (commands[i].args.size() >= 1 && commands[i].args[0] == "JOIN")
 					handleJOIN(commands[i], cli);
 				else if  (commands[i].args.size() >= 1 && commands[i].args[0] == "INVITE")
@@ -210,44 +230,49 @@ void	Server::handleUser(Client &cli, cmd &command)
 	cli.registerState |= HAVE_USER;
 }
 
+std::string returnNickORGhost(std::string nick)
+{
+	if (nick.empty())
+		return "GHOST";
+	return nick;
+}
+
 void	Server::handleNick(Client &cli, cmd &command)
 {
 	if (command.args.size() != 2)
 	{
 		if (command.args.size() == 1)
-			cli.send_message(ERR_NONICKNAMEGIVEN(cli.nick, getHostName()));
+			cli.send_message(ERR_NONICKNAMEGIVEN(returnNickORGhost(cli.nick), getHostName()));
 		else
-			cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, getHostName()));
+			cli.send_message(ERR_ERRONEUSNICKNAME(returnNickORGhost(cli.nick), getHostName()));
 		return;
 	}
-	for (size_t i = 0; i < clients.size(); i++)
+	if (!command.isValidNick())
 	{
-		if ((command.args[1][0] == ':' && clients[i].nick == command.buff) || clients[i].nick == command.args[1])
-		{
-			cli.send_message(ERR_NICKNAMEINUSE(cli.nick, getHostName()));
-			return;
-		}
+		cli.send_message(ERR_ERRONEUSNICKNAME(returnNickORGhost(cli.nick), getHostName()));
+		return;
 	}
-	for (size_t i = 0; command.args[1][0] != ':' && i < command.args[1].size(); i++)
+	std::string newNick = command.useBuffer(1) ? command.buff : command.args[1];
+	if (isClientBef(newNick) != NULL)
 	{
-		if (isspace(command.args[1][i]) || command.args[1][i] == ':' || command.args[1][i] == '#')
-		{
-			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, getHostName()));
-			return;
-		}
+		cli.send_message(ERR_NICKNAMEINUSE(returnNickORGhost(cli.nick), getHostName()));
+		return;
 	}
-	for (size_t i = 0; command.args[1][0] == ':' && i < command.buff.size(); i++)
+	if (cli.registerState == HAVE_REGISTERD)
 	{
-		if (isspace(command.buff[i]) || command.buff[i] == ':' || command.buff[i] == '#')
+		// The NICK message may be sent from the server to clients to acknowledge their NICK command was successful, and to inform other clients about the change of nickname. In these cases, the <source> of the message will be the old nickname [ [ "!" user ] "@" host ] of the user who is changing their nickname.
+		// :oldNick!user123@example.com NICK newNick
+		#define RPL_NICK(nick, user, newNick, hostname) ":" + nick + "!" + user + "@" + hostname + " NICK " + newNick + "\r\n"
+		std::cout << GRE << "update nickname to: |" << newNick << "|\e[0m" << std::endl;
+		// update nickname in all channels
+		for (size_t i = 0; i < channels.size(); i++)
 		{
-			cli.send_message(ERR_ERRONEUSNICKNAME(cli.nick, getHostName()));
-			return;
+			channels[i]->updateNick(cli.nick, newNick);
 		}
+		cli.send_to_all_channels(RPL_NICK(cli.nick ,cli.user, newNick, cli.hostname));
+		cli.send_message(RPL_NICK(cli.nick, cli.user, newNick, cli.hostname));
 	}
-	if (command.args[1][0] == ':')
-		cli.nick = command.buff;
-	else
-		cli.nick = command.args[1];
+	cli.nick = newNick;
 	cli.registerState |= HAVE_NICK;
 }
 
@@ -271,14 +296,10 @@ void	Server::handlePass(Client &cli, cmd &command)
 	cli.send_message(ERR_PASSWDMISMATCH(cli.nick, getHostName()));
 }
 
-///////////////////////////////////
-//getters
 std::string const Server::getHostName()
 {
 	return IrcServhostname;
 }
 
 Server::~Server()
-{
-	
-}
+{}

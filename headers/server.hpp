@@ -24,6 +24,7 @@ class Channel;
 struct	cmd 
 {
 	bool useBuffer(int n);
+	bool isValidNick();
 	std::vector<std::string> args;
 	std::string	buff;
 };
@@ -77,6 +78,7 @@ class Server
 		void handleKICK(cmd &command, Client &cli);
 		void handlePART(cmd &command, Client &cli);
 		void handleQUIT(cmd &command, Client &cli);
+		void handleUpdateNick(cmd &command, Client &cli);
 		// channel functions
 		Channel *isChannelExisiting(std::string name);
 		void sendMSG(std::string &target, std::string &text, Client &cli);

@@ -49,7 +49,7 @@ class Client
 		void leaveAllChannels(std::string reason);
 		void eraseInvitedChannel(std::string channelName);
 		void eraseChannel(std::string channelName);
-
+		void send_to_all_channels(std::string msg);
 		// bool operator == (const Client &c);
 		// bool operator != (const Client &c);
 

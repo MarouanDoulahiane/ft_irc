@@ -43,7 +43,7 @@ void	Server::handleTOPIC(cmd &command, Client &cli)
 
 bool	cmd::useBuffer(int n)
 {
-	if (args.size() >= 2 && args[n].size() > 0 && args[n][0] == ':')
+	if (args.size() > n && args[n].size() > 0 && args[n][0] == ':')
 		return true;
 	return false;
 }

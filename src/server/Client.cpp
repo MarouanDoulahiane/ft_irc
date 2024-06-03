@@ -33,6 +33,14 @@ void Client::eraseChannel(std::string channel)
 
 }
 
+void Client::send_to_all_channels(std::string msg)
+{
+	std::vector<Channel *>::iterator it;
+	for (it = this->Channels.begin(); it != this->Channels.end(); it++)
+	{
+		(*it)->sendMessageCh(msg);
+	}
+}
 
 // Client::Client(int sock, std::string nick, std::string user, std::string hostname);
 void Client::send_messageCH(char *msg)

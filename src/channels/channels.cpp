@@ -32,6 +32,19 @@ Channel::Channel(std::string name, std::string pass, Client &client, Server *srv
     }
 }
 
+void Channel::updateNick(std::string oldNick, std::string newNick)
+{
+    std::vector<Client>::iterator it;
+    for (it = this->clients.begin(); it != this->clients.end(); it++)
+    {
+        if (it->nick == oldNick)
+        {
+            it->nick = newNick;
+            return;
+        }
+    }
+}
+
 void Channel::addInvited(Client &client)
 {
     this->InvitedClients.push_back(client);
@@ -151,6 +164,16 @@ void Channel::sendMessageCh(std::string msg)
     std::vector<Client>::iterator it;
     for (it = this->clients.begin(); it != this->clients.end(); it++)
         it->send_message(msg);
+}
+
+void Channel::sendMessageChExclude(std::string msg, std::string nick)
+{
+    std::vector<Client>::iterator it;
+    for (it = this->clients.begin(); it != this->clients.end(); it++)
+    {
+        if (it->nick != nick)
+            it->send_message(msg);
+    }
 }
 
 
