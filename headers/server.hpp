@@ -81,6 +81,7 @@ class Server
 		void handleUpdateNick(cmd &command, Client &cli);
 		// channel functions
 		Channel *isChannelExisiting(std::string name);
+		void  parseFlags(cmd &command, Client &cli, std::string &flagsHolder, std::string &addParams);
 		void sendMSG(std::string &target, std::string &text, Client &cli);
 		void inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client);
 		void addNewChannel(std::string name,std::string pass, Client &client);

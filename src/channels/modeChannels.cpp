@@ -1,5 +1,41 @@
 #include "../../headers/Server.hpp"
 
+
+void  Server::parseFlags(cmd &command, Client &cli, std::string &flagsHolder, std::string &addParams)
+{
+    std::vector<std::string> flags;
+    std::vector<std::string> params;
+    std::string flagsList = "+-oltik";
+    for(int i = 2; i < command.args.size();i++)
+    {
+        if (command.args[i][0] == '+' || command.args[i][0] == '-')
+            flags.push_back(command.args[i]);
+        else
+        {
+            addParams += command.args[i];
+            if (i != command.args.size() - 1)
+                addParams += " ";
+        }
+    }
+    int numberOfFlags = 0;
+    std::string singleFlag;
+    for(std::vector<std::string>::iterator it = flags.begin(); it != flags.end(); it++)
+    {
+        singleFlag = *it;
+        for (int i = 0; i < singleFlag.size(); i++)
+        {
+            if (flagsList.find(singleFlag[i]) != std::string::npos)
+            {
+                if (singleFlag[i] != '+' && singleFlag[i] != '-')
+                    numberOfFlags++;
+                flagsHolder += singleFlag[i];
+            }
+            else
+                cli.send_message(ERR_UNKNOWNMODE(cli.nick, cli.getHostname(), command.args[1], singleFlag[i]));
+        }
+    }
+}
+
 void Server::handleMode(cmd &command, Client &cli)
 {
     if (command.args.size() < 2)
@@ -15,16 +51,10 @@ void Server::handleMode(cmd &command, Client &cli)
         cli.send_message(RPL_CHANNELMODES(this->getHostName(), target, cli.nick, channel->getMode()));
         return ;
     }
-    std::string flags = command.args[2];
-    std::string addParams = "";
-    int i;
-    for(i = 3; i < command.args.size(); i++)
-    {
-        addParams += command.args[i] + " ";
-        applyModeFlags(target, flags, addParams, cli);
-    }
-    if (i == 3)
-        applyModeFlags(target, flags, addParams, cli); // ?
+    std::string flags;
+    std::string addParams;
+    parseFlags(command, cli, flags, addParams);
+    applyModeFlags(target, flags, addParams, cli);
 }
 
 void FInviteOnly(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
@@ -43,6 +73,7 @@ void FKey(Channel* channel, bool setFlag,  std::string& additionalParams, Client
         {
             channel->setKey(additionalParams);
             channel->isPasswordSet = true;
+            channel->sendMessageCh(RPL_MODEIS(channel->getName(), hostName, "+k"));
         }
     }
     else
@@ -87,7 +118,6 @@ void FOperator(Channel* channel, bool setFlag,  std::string& additionalParams, C
             client.send_message(ERR_NEEDMOREPARAMS(client.nick, hostName));
         else
             channel->addOperator(additionalParams, hostName, client);
-
     }
     else
     {
@@ -118,9 +148,8 @@ void FTopicRestrictions(Channel* channel, bool setFlag,  std::string& additional
 void Server::applyModeFlags(std::string channelName, std::string modeFlags, std::string addParams, Client &client)
 {
     std::vector<std::string> splitParams;
-    if (addParams.size() != 0){
+    if (addParams.size() != 0)
         splitParams = split(addParams, ' ');
-    }
     else
         splitParams.push_back(addParams);
     std::string mode = "";
