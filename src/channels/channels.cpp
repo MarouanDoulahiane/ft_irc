@@ -73,6 +73,7 @@ bool Channel::add(Client &client, std::string pass)
 
 void Channel::addOperator(const std::string& nickname, std::string hostName, Client &client)
 {
+    std::cout << RED << "addOperator: " << nickname << WHI << std::endl;
     if (nickInChannel(nickname) == true)
     {
         std::vector<Client>::iterator it;
@@ -80,9 +81,11 @@ void Channel::addOperator(const std::string& nickname, std::string hostName, Cli
         {
             if (it->nick == nickname)
             {
+                if (this->isOnOperatorList(it->GetFd()))
+                    return;
                 this->Operators.push_back(it->GetFd());
                 this->sendMessageCh(RPL_MODEISOP(name, hostName, "+o", nickname));
-                client.send_message(RPL_YOUREOPER(hostName, client.nick));
+                client.send_message(RPL_CHANNELMODES(hostName, this->name, client.nick, "+o"));
                 this->_isOperator = true;
                 return;
             }
@@ -94,21 +97,34 @@ void Channel::addOperator(const std::string& nickname, std::string hostName, Cli
 
 void Channel::removeOperator(const std::string& nickname, std::string hostName, Client &client)
 {
-    if (this->isOnOperatorList(client.GetFd()))
+    std::cout << RED << "addOperator: " << nickname << WHI << std::endl;
+    if (nickInChannel(nickname) == true)
     {
-        for (unsigned int i = 0; i < this->Operators.size(); i++)
+    std::cout << "removeOperator" << std::endl;
+        Client *client = this->Ircserv->isClientBef(nickname);
+        if (client == NULL)
         {
-            if (this->Operators[i] == client.GetFd())
-            {
-                this->Operators.erase(this->Operators.begin() + i);
-                this->sendMessageCh(RPL_MODEISOP(name, hostName, "-o", nickname));
-                client.send_message(RPL_MODEISOP(name, hostName, "-o", nickname));
-                return;
-            }
+            client->send_message(ERR_NOSUCHNICK(client->nick, this->srv_hostname, nickname));
+            return;
         }
+        if (this->checkClient(*client) == false)
+        {
+            client->send_message(ERR_USERNOTINCHANNEL(this->srv_hostname, this->name));
+            return;
+        }
+        if (this->isOnOperatorList(client->GetFd()))
+        {
+            if (Operators.size() == 1)
+                return;
+            this->deleteOperator(client->GetFd());
+            this->sendMessageCh(RPL_MODEISOP(name, hostName, "-o", nickname));
+            client->send_message(RPL_CHANNELMODES(hostName, this->name, client->nick, "-o"));
+        }
+        else
+            client->send_message(ERR_CHANOPRIVSNEEDED(client->nick, hostName, this->name));
     }
     else
-        client.send_message(ERR_CHANOPRIVSNEEDED(client.nick, hostName, this->getName()));
+        client.send_message(ERR_USERNOTINCHANNEL(hostName, this->name));
 }
 
 void Channel::deleteOperator(int fd)
@@ -353,7 +369,6 @@ bool Channel::checkInvitedClient(Client &client)
     return false;
 
 }
-
 bool Channel::nickInChannel(std::string nickname)
 {
     std::vector<Client>::iterator it;
