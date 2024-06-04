@@ -1,6 +1,34 @@
 #include "../../headers/Server.hpp"
 
 
+void Server::handleMode(cmd &command, Client &cli)
+{
+    if (command.args.size() < 2)
+    {
+        cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, this->getHostName()));
+        return;
+    }
+    std::string target = command.args[1];
+    std::cout << RED << "START MODE DEBUG   " << command.args.size() << WHI << std::endl;
+    if (command.args.size() < 3)
+    {
+        Channel *channel = isChannelExisiting(target);
+        if (!channel)
+        {
+            cli.send_message(ERR_NOSUCHCHANNEL(this->getHostName(), target, cli.nick));
+            return;
+        }
+        if (channel->getMode().empty())
+            cli.send_message(RPL_CHANNELMODES(this->getHostName(), target, cli.nick, "No modes set"));
+        else
+            cli.send_message(RPL_CHANNELMODES(this->getHostName(), target, cli.nick, "+" + channel->getMode()));
+        return ;
+    }
+    std::string flags;
+    std::string addParams;
+    parseFlags(command, cli, flags, addParams);
+    applyModeFlags(target, flags, addParams, cli);
+}
 void  Server::parseFlags(cmd &command, Client &cli, std::string &flagsHolder, std::string &addParams)
 {
     std::vector<std::string> flags;
@@ -36,48 +64,17 @@ void  Server::parseFlags(cmd &command, Client &cli, std::string &flagsHolder, st
     }
 }
 
-void Server::handleMode(cmd &command, Client &cli)
-{
-    if (command.args.size() < 2)
-    {
-        cli.send_message(ERR_NEEDMOREPARAMS(cli.nick, this->getHostName()));
-        return;
-    }
-    std::string target = command.args[1];
-    std::cout << RED << "START MODE DEBUG   " << command.args.size()<< WHI << std::endl;
-    if (command.args.size() < 3)
-    {
-        Channel *channel = isChannelExisiting(target);
-        std::string mode;
-        if (channel->isInviteOnlySet)
-            mode += "i";
-        if (channel->isTopicSet)
-            mode += "t";
-        if (channel->isPasswordSet)
-            mode += "k";
-        if (channel->getuserLimit() > 0)
-            mode += "l";
-        if (channel->Operators.size() > 0)
-            mode += "o";
-        if (mode.empty())
-            cli.send_message(RPL_CHANNELMODES(this->getHostName(), target, cli.nick, "No modes set"));
-        else
-            cli.send_message(RPL_CHANNELMODES(this->getHostName(), target, cli.nick, "+" + mode));
-        return ;
-    }
-    std::string flags;
-    std::string addParams;
-    parseFlags(command, cli, flags, addParams);
-    applyModeFlags(target, flags, addParams, cli);
-}
 
 void FInviteOnly(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
 {
     channel->setInviteOnly(setFlag);
-    if (setFlag)
+    if (setFlag == true)
+    {
         channel->sendMessageCh(RPL_MODEIS(channel->getName(), hostName, "+i"));
+    }
     else
         channel->sendMessageCh(RPL_MODEIS(channel->getName(), hostName, "-i"));
+
 }
 
 void FKey(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
@@ -116,12 +113,12 @@ void FUserLimit(Channel* channel, bool setFlag,  std::string& additionalParams, 
             if (limit && (limit > 0 && limit < 1000))
             {
                 channel->setUserLimit(limit);
-                channel->sendMessageCh(RPL_MODEISLIMIT(channel->getName(), hostName, "+l", additionalParams));// 3ndak
+                channel->sendMessageCh(RPL_MODEISLIMIT(channel->getName(), hostName, "+l", additionalParams));
             }
             else
             {
                 channel->setUserLimit(0);
-                channel->sendMessageCh(RPL_MODEISLIMIT(channel->getName(), hostName, "-l", "0"));// 3ndak
+                channel->sendMessageCh(RPL_MODEISLIMIT(channel->getName(), hostName, "-l", "0"));
             }
         }
     }
@@ -146,9 +143,7 @@ void FOperator(Channel* channel, bool setFlag,  std::string& additionalParams, C
         if (additionalParams.empty())
             client.send_message(ERR_NEEDMOREPARAMS(client.nick, hostName));
         else
-        {
-            channel->removeOperator(additionalParams, hostName, client);// fix it
-        }
+            channel->removeOperator(additionalParams, hostName, client);
     }
 }
 
@@ -167,17 +162,61 @@ void FTopicRestrictions(Channel* channel, bool setFlag,  std::string& additional
     }
 }
 
+
+void Server::storeMode(Channel *channel, char mode, bool setFlag)
+{
+    std::string modeList = channel->getMode();
+    if (setFlag == true)
+    {
+        if ((channel->isInviteOnlySet == true && modeList.find('i') == std::string::npos ) || modeList.empty() == true)
+            modeList += 'i';
+        if ((channel->isTopicSet == true && modeList.find('t') == std::string::npos) || modeList.empty() == true)
+            modeList += 't';
+        if ((channel->isPasswordSet == true && modeList.find('k') == std::string::npos) || modeList.empty() == true)
+            modeList += 'k';
+        if ((channel->getuserLimit() > 0 && modeList.find('l') == std::string::npos) || modeList.empty() == true)
+            modeList += 'l';
+        if ((channel->Operators.size() > 0 && modeList.find('o') == std::string::npos) || modeList.empty() == true)
+            modeList += 'o';
+    }
+    else
+    {
+        if (channel->isInviteOnlySet == false)
+        {
+            if (modeList.find('i') != std::string::npos)
+                modeList.erase(modeList.find('i'), 1);
+        }
+        if (channel->isTopicSet == false)
+        {
+            if (modeList.find('t') != std::string::npos)
+                modeList.erase(modeList.find('t'), 1);
+        }
+        if (channel->isPasswordSet == false)
+        {
+            if (modeList.find('k') != std::string::npos)
+                modeList.erase(modeList.find('k'), 1);
+        }
+        if (channel->getuserLimit() == 0)
+        {
+            if (modeList.find('l') != std::string::npos)
+                modeList.erase(modeList.find('l'), 1);
+        }
+        if (channel->Operators.size() == 0)
+        {
+            if (modeList.find('o') != std::string::npos)
+                modeList.erase(modeList.find('o'), 1);
+        }
+    }
+    channel->setMode(modeList);
+}
+
 void Server::applyModeFlags(std::string channelName, std::string modeFlags, std::string addParams, Client &client)
 {
-    std::cout << RED <<"------ " << modeFlags << WHI << std::endl;
     std::vector<std::string> splitParams;
     if (addParams.size() != 0)
         splitParams = split(addParams, ' ');
     else
         splitParams.push_back(addParams);
-    std::cout << RED << "WTF    "<<splitParams.size() << WHI << std::endl;
-    // for (std::vector<std::string>::iterator it = splitParams.begin(); it != splitParams.end(); it++)
-    //     std::cout << RED << *it << WHI << std::endl;
     std::string mode = "";
     Channel *channel = isChannelExisiting(channelName);
     if (!channel)
@@ -201,7 +240,6 @@ void Server::applyModeFlags(std::string channelName, std::string modeFlags, std:
     for (std::string::iterator it = modeFlags.begin(); it != modeFlags.end(); it++)
     {
         char flag = *it;
-         std::cout << RED <<"SET FLAG-->00 " << flag << WHI << std::endl;
         if (flag == '+')
         {
             setFlag = true;
@@ -213,26 +251,28 @@ void Server::applyModeFlags(std::string channelName, std::string modeFlags, std:
             continue;
         }
         std::map<char, void (*)(Channel*,  bool, std::string&, Client&, std::string)>::iterator actionIt = modeActions.find(flag);
+        std::string empty = "";
         if (actionIt != modeActions.end())
         {
-            std::cout << RED <<"SET FLAG-->1 " << flag << WHI << std::endl;
-            if (i < splitParams.size() && flag != 'i' && flag != 't')
+            if (i < splitParams.size() && flag != 'i' && flag != 't' && setFlag == true)
             {
-                std::cout << RED <<"SET FLAG-->2 " << flag <<  " -->SPLIT PARAMS" << splitParams[i] << WHI << std::endl;
-                actionIt->second(channel, flag, splitParams[i], client, this->getHostName());
+                actionIt->second(channel, setFlag, splitParams[i], client, this->getHostName());
                 i++;
             }
-            else
+            else if (flag == 'i' || flag == 't')
             {
-                std::cout << RED <<"3 " << flag << WHI << std::endl;
-                std::string empty = "";
-                actionIt->second(channel, flag, empty, client, this->getHostName());
+                actionIt->second(channel, setFlag, empty, client, this->getHostName());
             }
+            else if(!setFlag)
+                actionIt->second(channel, setFlag, empty, client, this->getHostName());
+            else
+                client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
         }
         else
         {
             if (flag != 's' && flag != 'n')
                 client.send_message(ERR_UNKNOWNMODE(client.nick, this->IrcServhostname, channelName, flag));
         }
+        storeMode(channel, flag, setFlag);
     }
 }

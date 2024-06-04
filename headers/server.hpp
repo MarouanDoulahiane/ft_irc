@@ -50,7 +50,6 @@ class Server
     	Server();
 		~Server();
     	static void SignalHandler(int signum);
-    	
 		std::vector<Channel*> channels;
 		
 		void IrcServerInit(std::string port, std::string password);
@@ -86,7 +85,7 @@ class Server
 		void inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client);
 		void addNewChannel(std::string name,std::string pass, Client &client);
 		void applyModeFlags(std::string channelName, std::string modeFlags, std::string addParams, Client &client);
-		
+		void storeMode(Channel *channel, char mode, bool setFlag);
 		
 		//getters
 		std::string const getHostName();
@@ -94,3 +93,6 @@ class Server
 };
 
 std::vector<std::string> split(const std::string &s, char delimiter);
+
+
+// MODE #ch +i +t +k +l omar

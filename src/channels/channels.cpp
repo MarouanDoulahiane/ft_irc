@@ -2,6 +2,16 @@
 #include "../../headers/Client.hpp"
 #include <exception>
 
+Channel::Channel()
+{
+    this->isPasswordSet = false;
+    this->isInviteOnlySet = false;
+    this->isTopicSet = false;
+    this->_isOperator = false;
+    this->AllowedUsers = 0;
+    this->TopicTimestamp = 0;
+}
+
 
 Channel::Channel(std::string name, std::string pass, Client &client, Server *srv)
 {
@@ -28,7 +38,7 @@ Channel::Channel(std::string name, std::string pass, Client &client, Server *srv
         this->password = pass;
         this->Operators.push_back(client.GetFd());
         this->add(client, pass);
-        this->setMode("+k");// debug here double check 
+        this->setMode("+k");
     }
 }
 
