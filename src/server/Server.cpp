@@ -44,7 +44,7 @@ void Server::IrcServerInit(std::string port, std::string password)
 			throw(std::runtime_error("poll() faild"));
 		for (size_t i = 0; i < fds.size(); i++)
 		{
-			if (fds[i].revents & POLLIN)// check if there is data to read
+			if (fds[i].revents & POLLIN)
 			{
 				if (fds[i].fd == sockFd)
 					AcceptNewClient();
@@ -64,7 +64,7 @@ void Server::SerSocket()
 
     add.sin_family = AF_INET; 
 	add.sin_port = htons(this->Port); 
-	add.sin_addr.s_addr = INADDR_ANY; // set the address to any local machine address
+	add.sin_addr.s_addr = INADDR_ANY;
     sockFd = socket(AF_INET, SOCK_STREAM, 0);
     if (!sockFd)
         throw std::runtime_error("Failed to creat Socket");
@@ -114,14 +114,14 @@ void Server::AcceptNewClient()
 		std::cout << "accept() failed" << std::endl;
 		return;
 	}
-	if (fcntl(incofd, F_SETFL, O_NONBLOCK) == -1) // set the socket option (O_NONBLOCK) for non-blocking socket
+	if (fcntl(incofd, F_SETFL, O_NONBLOCK) == -1)
 	{
 		std::cout << "fcntl() failed" << std::endl;
 		return;
 	}
-	NewPoll.fd = incofd; // add the client socket to the pollfd
-	NewPoll.events = POLLIN; // set the event to POLLIN for reading data
-	NewPoll.revents = 0; // set the revents to 0
+	NewPoll.fd = incofd;
+	NewPoll.events = POLLIN;
+	NewPoll.revents = 0;
 	cli.SetFd(incofd);
 	cli.setIpAdd(inet_ntoa((cliadd.sin_addr)));
 	cli.setHostname(this->getHostName());

@@ -254,7 +254,7 @@ void Server::applyModeFlags(std::string channelName, std::string modeFlags, std:
         std::string empty = "";
         if (actionIt != modeActions.end())
         {
-            if (i < splitParams.size() && flag != 'i' && flag != 't' && setFlag == true)
+            if ((i < splitParams.size() && flag != 'i' && flag != 't' && setFlag == true))
             {
                 actionIt->second(channel, setFlag, splitParams[i], client, this->getHostName());
                 i++;
@@ -263,8 +263,19 @@ void Server::applyModeFlags(std::string channelName, std::string modeFlags, std:
             {
                 actionIt->second(channel, setFlag, empty, client, this->getHostName());
             }
-            else if(!setFlag)
+            else if(setFlag == false && flag == 'o')
+            {
+                if (i < splitParams.size())
+                {
+                    actionIt->second(channel, setFlag, splitParams[i], client, this->getHostName());
+                    i++;
+                }
+            }
+            else if(setFlag == false)
+            {
+                std::cout << flag << setFlag << std::endl;
                 actionIt->second(channel, setFlag, empty, client, this->getHostName());
+            }
             else
                 client.send_message(ERR_NEEDMOREPARAMS(client.nick, this->getHostName()));
         }
