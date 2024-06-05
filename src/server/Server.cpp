@@ -260,11 +260,7 @@ void	Server::handleNick(Client &cli, cmd &command)
 	}
 	if (cli.registerState == HAVE_REGISTERD)
 	{
-		// The NICK message may be sent from the server to clients to acknowledge their NICK command was successful, and to inform other clients about the change of nickname. In these cases, the <source> of the message will be the old nickname [ [ "!" user ] "@" host ] of the user who is changing their nickname.
-		// :oldNick!user123@example.com NICK newNick
-		#define RPL_NICK(nick, user, newNick, hostname) ":" + nick + "!" + user + "@" + hostname + " NICK " + newNick + "\r\n"
 		std::cout << GRE << "update nickname to: |" << newNick << "|\e[0m" << std::endl;
-		// update nickname in all channels
 		for (size_t i = 0; i < channels.size(); i++)
 		{
 			channels[i]->updateNick(cli.nick, newNick);

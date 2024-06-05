@@ -84,3 +84,4 @@
 // PING PONG
 #define RPL_PONG(hostname, nick) ":" + nick + " PING " + hostname + "\r\n"
 #define RPL_PING(hostname, nick) ":" + hostname + " PONG " + nick + "\r\n"
+#define RPL_NICK(nick, user, newNick, hostname) ":" + nick + "!" + user + "@" + hostname + " NICK " + newNick + "\r\n"

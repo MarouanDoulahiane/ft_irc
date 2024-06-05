@@ -44,7 +44,7 @@ void	Server::handleInvite(cmd &command, Client &cli)
 		if (it->nick == nick)
 		{
 			invited = true;
-			inviteClinetToChannel(*it, *ch, cli);// need to double check
+			inviteClinetToChannel(*it, *ch, cli);
 			break;
 		}
 	}
