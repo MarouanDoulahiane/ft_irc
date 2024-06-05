@@ -66,19 +66,8 @@ std::string Client::getHostname()
 	return hostname;
 }
 
-void Client::leaveAllChannels(std::string reason)
-{
-	std::vector<Channel *>::iterator it;
-	for (it = this->Channels.begin(); it != this->Channels.end(); it++)
-	{
-		// (*it)->partClient(*this, reason);
-	}
-}
 
-Client::~Client()
-{
-    
-}
+Client::~Client() {}
 
 std::string Client::getInvitedChannels()
 {
@@ -114,7 +103,6 @@ void Client::setIpAdd(std::string ipadd)
 	Ipadd = ipadd;
 }
 
-///////// need change after
 
 ClientErrMsgException::ClientErrMsgException(std::string msg, Client &client) throw() : _cmessage(msg), _client(client)
 {

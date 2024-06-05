@@ -45,13 +45,8 @@ class Client
 		std::string getInvitedChannels();
 		std::vector<Channel *> getChannels();
 
-		// void disconnect();
-		void leaveAllChannels(std::string reason);
-		void eraseInvitedChannel(std::string channelName);
 		void eraseChannel(std::string channelName);
 		void send_to_all_channels(std::string msg);
-		// bool operator == (const Client &c);
-		// bool operator != (const Client &c);
 
 };
 	class ClientErrMsgException : public std::exception

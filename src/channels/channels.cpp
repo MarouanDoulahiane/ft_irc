@@ -114,7 +114,7 @@ void Channel::removeOperator(const std::string& nickname, std::string hostName, 
         Client *client = this->Ircserv->isClientBef(nickname);
         if (client == NULL)
         {
-            client->send_message(ERR_NOSUCHNICK(client->nick, this->srv_hostname, nickname));
+            client->send_message(ERR_NOSUCHNICK(this->srv_hostname, nickname, client->nick));
             return;
         }
         if (this->checkClient(*client) == false)

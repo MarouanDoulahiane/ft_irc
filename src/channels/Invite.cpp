@@ -17,11 +17,10 @@ void	Server::handleInvite(cmd &command, Client &cli)
 		cli.send_message(RPL_ENDOFINVITELIST(cli.nick, this->getHostName()));
 		return;
 	}
-	std::cout << RED << "DEBUG INVITE " << channel << std::endl;
 	Channel *ch = isChannelExisiting(channel);
 	if (!ch)
 	{
-		cli.send_message(ERR_NOSUCHCHANNEL(cli.nick, this->getHostName(), channel));
+		cli.send_message(ERR_NOSUCHCHANNEL(this->getHostName(), channel, cli.nick));
 		return;
 	}
 	if (!ch->checkClient(cli))
@@ -36,7 +35,7 @@ void	Server::handleInvite(cmd &command, Client &cli)
 	}
 	if (ch->nickInChannel(nick))
 	{
-		cli.send_message(ERR_USERONCHANNEL(cli.nick, this->getHostName(), nick));
+		cli.send_message(ERR_USERONCHANNEL(this->getHostName(), channel, nick));
 		return;
 	}
 	bool invited = false;
@@ -51,15 +50,13 @@ void	Server::handleInvite(cmd &command, Client &cli)
 	}
 	if (!invited)
 	{
-		cli.send_message(ERR_NOSUCHNICK(cli.nick, this->getHostName(), nick));
+		cli.send_message(ERR_NOSUCHNICK(this->getHostName(), channel, nick));
 		return;
 	}
 }
 
 void Server::inviteClinetToChannel(Client &invitedClient, Channel &channel, Client &client)
 {
-	// invitedClient.invitedChannels.push_back(channel.getName());
-	// check if client is already invited
 	std::vector<std::string>::iterator it = std::find(invitedClient.invitedChannels.begin(), invitedClient.invitedChannels.end(), channel.getName());
 	if (it == invitedClient.invitedChannels.end())
 		invitedClient.invitedChannels.push_back(channel.getName());
@@ -74,5 +71,5 @@ void Server::inviteClinetToChannel(Client &invitedClient, Channel &channel, Clie
 	}
 	if (!isAreadyInvited)
 		channel.InvitedClients.push_back(invitedClient);
-	invitedClient.send_message(RPL_INVITING(client.nick, this->getHostName(), invitedClient.nick, channel.getName()));
+	invitedClient.send_message(RPL_INVITING(this->getHostName(), client.nick, invitedClient.nick, channel.getName()));
 }

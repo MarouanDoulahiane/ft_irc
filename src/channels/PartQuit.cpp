@@ -10,12 +10,12 @@ void	Server::handlePART(cmd &command, Client &cli)
 	Channel *channel = getChannelByName(command.args[1]);
 	if (!channel)
 	{
-		cli.send_message(ERR_NOSUCHCHANNEL(cli.nick, command.args[1], getHostName()));
+		cli.send_message(ERR_NOSUCHCHANNEL(getHostName(), command.args[1], cli.nick));
 		return;
 	}
 	if (channel->nickInChannel(cli.nick) == false)
 	{
-		cli.send_message(ERR_NOTONCHANNEL(cli.nick, getHostName()));
+		cli.send_message(ERR_NOTONCHANNEL(getHostName(), command.args[1]));
 		return;
 	}
 	channel->deleteClient(cli);
