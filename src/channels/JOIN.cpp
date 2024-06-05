@@ -111,12 +111,10 @@ void Server::handleJOIN(cmd &command, Client &cli)
     std::vector<std::string>::iterator it = keys.begin();
 	for(int i = 0; i < channels.size(); i++)
 	{
-		if (keys.size() == 0)
-			addNewChannel(channels[i],"",cli);
+		std::string _key = "";
 		if (it != keys.end())
-		{
-			addNewChannel(channels[i], *it, cli);
-            it++;
-		}
+			_key = *it;
+		addNewChannel(channels[i], _key, cli);
+		it++;
 	}
 }
