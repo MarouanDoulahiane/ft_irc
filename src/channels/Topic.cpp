@@ -41,7 +41,7 @@ void	Server::handleTOPIC(cmd &command, Client &cli)
 }
 
 
-bool	cmd::useBuffer(int n)
+bool	cmd::useBuffer(size_t n)
 {
 	if (args.size() > n && args[n].size() > 0 && args[n][0] == ':')
 		return true;

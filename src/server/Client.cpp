@@ -72,7 +72,7 @@ Client::~Client() {}
 std::string Client::getInvitedChannels()
 {
 	std::string ret = "\0";
-	for(int i = 0; i < this->invitedChannels.size(); i++)
+	for(size_t i = 0; i < this->invitedChannels.size(); i++)
 			ret = invitedChannels[i] + " ";
 	return ret;
 }

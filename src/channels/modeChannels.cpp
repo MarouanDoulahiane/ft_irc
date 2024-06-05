@@ -34,7 +34,7 @@ void  Server::parseFlags(cmd &command, Client &cli, std::string &flagsHolder, st
     std::vector<std::string> flags;
     std::vector<std::string> params;
     std::string flagsList = "+-oltik";
-    for(int i = 2; i < command.args.size();i++)
+    for(size_t i = 2; i < command.args.size();i++)
     {
         if (command.args[i][0] == '+' || command.args[i][0] == '-')
             flags.push_back(command.args[i]);
@@ -50,7 +50,7 @@ void  Server::parseFlags(cmd &command, Client &cli, std::string &flagsHolder, st
     for(std::vector<std::string>::iterator it = flags.begin(); it != flags.end(); it++)
     {
         singleFlag = *it;
-        for (int i = 0; i < singleFlag.size(); i++)
+        for (size_t i = 0; i < singleFlag.size(); i++)
         {
             if (flagsList.find(singleFlag[i]) != std::string::npos)
             {
@@ -67,6 +67,8 @@ void  Server::parseFlags(cmd &command, Client &cli, std::string &flagsHolder, st
 
 void FInviteOnly(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
 {
+    (void)additionalParams;
+    (void)client;
     channel->setInviteOnly(setFlag);
     if (setFlag == true)
     {
@@ -150,6 +152,9 @@ void FOperator(Channel* channel, bool setFlag,  std::string& additionalParams, C
 
 void FTopicRestrictions(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName)
 {
+    (void)additionalParams;
+    (void)client;
+
     if (setFlag)
     {
         channel->isTopicSet = setFlag;
@@ -165,6 +170,7 @@ void FTopicRestrictions(Channel* channel, bool setFlag,  std::string& additional
 
 void Server::storeMode(Channel *channel, char mode, bool setFlag)
 {
+    (void)mode;
     std::string modeList = channel->getMode();
     if (setFlag == true)
     {

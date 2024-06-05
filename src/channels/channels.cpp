@@ -69,7 +69,7 @@ bool Channel::add(Client &client, std::string pass)
         if (pass.empty() == true || this->password != pass)
             throw ClientErrMsgException(ERR_BADCHANNELKEY(client.nick, this->srv_hostname, this->name), client);
     }
-    if (this->getuserLimit() > 0 && this->clients.size() >= this->getuserLimit())
+    if (this->getuserLimit() > 0 && this->clients.size() >= (size_t)this->getuserLimit())
         throw ClientErrMsgException(ERR_CHANNELISFULL(client.nick, this->name), client);
     if (this->isInviteOnly() == true && !checkInvitedClient(client))
         throw ClientErrMsgException(ERR_INVITEONLY(client.nick, this->srv_hostname), client);

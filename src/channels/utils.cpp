@@ -76,7 +76,7 @@ std::vector<cmd> Server::parseBuffer(std::string buff)
 }
 Client *Server::isClientBef(std::string name)
 {
-	for(int i =0; i < clients.size(); i++)
+	for(size_t i =0; i < clients.size(); i++)
 	{
 		if (clients[i].nick == name)
 			return &clients[i];
@@ -86,7 +86,7 @@ Client *Server::isClientBef(std::string name)
 
 Client	&Server::findClient(int fd)
 {
-	for (unsigned int i = 0; i < clients.size(); i++)
+	for (size_t i = 0; i < clients.size(); i++)
 	{
 		if (clients[i].GetFd() == fd)
 			return clients[i];

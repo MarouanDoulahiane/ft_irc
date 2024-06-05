@@ -109,7 +109,7 @@ void Server::handleJOIN(cmd &command, Client &cli)
 		}
     }
     std::vector<std::string>::iterator it = keys.begin();
-	for(int i = 0; i < channels.size(); i++)
+	for(size_t i = 0; i < channels.size(); i++)
 	{
 		std::string _key = "";
 		if (it != keys.end())

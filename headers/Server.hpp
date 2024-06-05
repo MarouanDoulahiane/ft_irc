@@ -23,7 +23,7 @@ class Channel;
 
 struct	cmd 
 {
-	bool useBuffer(int n);
+	bool useBuffer(size_t n);
 	bool isValidNick();
 	std::vector<std::string> args;
 	std::string	buff;
