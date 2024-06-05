@@ -7,6 +7,11 @@ Server::Server()
 {
 	sockFd = -1;
 	this->IrcServhostname = "IRC-localhost";
+	this->jokes.push_back("Why did the computer go to the doctor? Because it had a virus!");
+	this->jokes.push_back("Why was the math book sad? Because it had too many problems.");
+	this->jokes.push_back("Why did the tomato turn red? Because it saw the salad dressing!");
+	this->jokes.push_back("Why did the scarecrow win an award? Because he was outstanding in his field!");
+	this->jokes.push_back("Why did the golfer bring two pairs of pants? In case he got a hole in one!");
 }
 
 bool cmd::isValidNick()
@@ -24,6 +29,8 @@ bool cmd::isValidNick()
 		if (!std::isalnum(nick[i]) && nick[i] != '_')
 			return false;
 	}
+	if (nick == "USER" || nick == "NICK" || nick == "QUIT" || nick == "JOIN" || nick == "PART" || nick == "TOPIC" || nick == "MODE" || nick == "PRIVMSG" || nick == "KICK" || nick == "INVITE" || nick == "PASS", nick == "BOT")
+		return false;
 	return true;
 }
 
@@ -160,6 +167,13 @@ void	printVectorCmd(std::vector<cmd> commands)
 	}
 }
 
+void Server::handleBOT(Client &cli)
+{
+	int random = rand() % jokes.size();
+
+	cli.send_message(PRIVMSG_FORMATUSER(std::string("BOT"), "BOT", this->getHostName(), cli.nick, jokes[random]));
+}
+
 void Server::ReceiveNewData(int fd)
 {
 	char buff[1024];
@@ -206,6 +220,10 @@ void Server::ReceiveNewData(int fd)
 					handlePART(commands[i], cli);
 				else if ((commands[i].args.size() >= 1 && commands[i].args[0] == "QUIT"))
 					handleQUIT(commands[i], cli);
+				else if ((commands[i].args.size() >= 1 && commands[i].args[0] == "BOT"))
+					handleBOT(cli);		
+				else 
+					cli.send_message(ERR_UNKNOWNCOMMAND(cli.nick, getHostName(), commands[i].args[0]));
 			}
 			else if (commands[i].args.size() > 0 && (commands[i].args[0] == "PASS" || commands[i].args[0] == "NICK" || commands[i].args[0] == "USER"))
 				Registration(cli, commands[i]);

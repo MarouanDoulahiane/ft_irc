@@ -42,6 +42,7 @@ class Server
 		std::string IrcServhostname;
     	std::vector<Client> clients;
     	std::vector<struct pollfd> fds;
+		std::vector<std::string> jokes;
 		
 		
     	static bool Signal;
@@ -77,7 +78,7 @@ class Server
 		void handleKICK(cmd &command, Client &cli);
 		void handlePART(cmd &command, Client &cli);
 		void handleQUIT(cmd &command, Client &cli);
-		void handleUpdateNick(cmd &command, Client &cli);
+		void handleBOT(Client &cli);
 		// channel functions
 		Channel *isChannelExisiting(std::string name);
 		void  parseFlags(cmd &command, Client &cli, std::string &flagsHolder, std::string &addParams);
