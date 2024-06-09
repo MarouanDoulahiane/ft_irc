@@ -112,7 +112,7 @@ void Server::handleJOIN(cmd &command, Client &cli)
 	for(size_t i = 0; i < channels.size(); i++)
 	{
 		std::string _key = "";
-		if (it != keys.end())
+		if (keys.size() > 0 && it != keys.end())
 			_key = *it;
 		addNewChannel(channels[i], _key, cli);
 		it++;
