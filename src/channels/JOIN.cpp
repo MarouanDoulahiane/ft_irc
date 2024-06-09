@@ -1,6 +1,5 @@
 #include "../../headers/Server.hpp"
 
-//channel function :
 Channel *Server::isChannelExisiting(std::string name)
 {
 	std::vector<Channel *>::iterator it;
@@ -30,9 +29,13 @@ Channel *Server::getChannelByName(std::string name)
 void Server::addNewChannel(std::string name, std::string pass, Client &client)
 {
     Channel *channel = isChannelExisiting(name);
+        try
+        {
     if (!channel)
     {
-        channel = new Channel(name, pass,client, this);
+        channel = new (std::nothrow) Channel(name, pass,client, this);
+		if (!channel)
+			throw std::runtime_error("new() faild");
         this->channels.push_back(channel);
         client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpadd()));
         client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
@@ -41,8 +44,6 @@ void Server::addNewChannel(std::string name, std::string pass, Client &client)
     }
     else
     {
-        try
-        {
             channel->add(client, pass);
             client.send_message(RPL_JOIN(client.nick, client.user, name, client.getIpadd()));
             client.send_message(RPL_MODEIS(name, this->getHostName(), channel->getMode()));
@@ -52,12 +53,12 @@ void Server::addNewChannel(std::string name, std::string pass, Client &client)
             client.send_message(RPL_ENDOFNAMES(this->getHostName(), client.nick, name));
             channel->sendMessageCh(client, RPL_JOIN(client.nick, client.user, channel->getName(), client.getIpadd()));
         }
-        catch(ClientErrMsgException &e)
-        {
-			std::cout << e.what() << std::endl;
-			client.send_message(e.what());
-        }
     }
+	catch(ClientErrMsgException &e)
+	{
+		client.send_message(e.what());
+	}
+	
 }
 
 void Server::handleJOIN(cmd &command, Client &cli)
@@ -115,7 +116,7 @@ void Server::handleJOIN(cmd &command, Client &cli)
 		if (keys.size() > 0 && it != keys.end())
 		{
 			_key = *it;
-			it++;	
+			it++;
 		}
 		addNewChannel(channels[i], _key, cli);
 	}

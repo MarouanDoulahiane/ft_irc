@@ -183,6 +183,7 @@ void Server::ReceiveNewData(int fd)
 	if(bytes <= 0 || fd == -1)
 	{ 
 		std::cout << RED << "Client is Disconnected" << WHI << std::endl;
+		cli.send_to_all_channels(RPL_QUIT(getHostName(), cli.nick, cli.user, "Client Disconnected"));
 		removeClient(fd);
 	}
 	else
