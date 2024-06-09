@@ -113,8 +113,10 @@ void Server::handleJOIN(cmd &command, Client &cli)
 	{
 		std::string _key = "";
 		if (keys.size() > 0 && it != keys.end())
+		{
 			_key = *it;
+			it++;	
+		}
 		addNewChannel(channels[i], _key, cli);
-		it++;
 	}
 }

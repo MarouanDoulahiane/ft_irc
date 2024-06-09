@@ -49,18 +49,18 @@ class Client
 		void send_to_all_channels(std::string msg);
 
 };
-	class ClientErrMsgException : public std::exception
-	{
-	    private:
-	        const std::string _cmessage;
-	        ClientErrMsgException() throw();
-	    public:
-	        ClientErrMsgException(std::string msg, Client &bc) throw();
-	        virtual ~ClientErrMsgException() throw();
-	        Client &_client;
-			const std::string getMessage() const;
-	        virtual const char* what() const throw()
-			{
-	            return (_cmessage.c_str());
-	        };
-	};
+class ClientErrMsgException : public std::exception
+{
+    private:
+        const std::string _cmessage;
+        ClientErrMsgException() throw();
+    public:
+        ClientErrMsgException(std::string msg, Client &bc) throw();
+        virtual ~ClientErrMsgException() throw();
+        Client &_client;
+		const std::string getMessage() const;
+        virtual const char* what() const throw()
+		{
+            return (_cmessage.c_str());
+        };
+};

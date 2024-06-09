@@ -29,7 +29,7 @@ bool cmd::isValidNick()
 		if (!std::isalnum(nick[i]) && nick[i] != '_')
 			return false;
 	}
-	if (nick == "USER" || nick == "NICK" || nick == "QUIT" || nick == "JOIN" || nick == "PART" || nick == "TOPIC" || nick == "MODE" || nick == "PRIVMSG" || nick == "KICK" || nick == "INVITE" || nick == "PASS", nick == "BOT")
+	if (nick == "USER" || nick == "NICK" || nick == "QUIT" || nick == "JOIN" || nick == "PART" || nick == "TOPIC" || nick == "MODE" || nick == "PRIVMSG" || nick == "KICK" || nick == "INVITE" || nick == "PASS" || nick == "BOT")
 		return false;
 	return true;
 }
@@ -43,8 +43,8 @@ void Server::IrcServerInit(std::string port, std::string password)
         throw std::out_of_range("Invalid Port");
     this->pass = password;
     SerSocket();
-	std::cout << GRE << "Server " << sockFd << " Connected" << WHI << std::endl;
-	std::cout << "Waiting to accept a connection...\n";
+	std::cout << GRE << "PIPE-SERVER has been Connected" << WHI << std::endl;
+	std::cout << YEL << "Waiting to accept a connection.." << WHI << std::endl;
 	while (Server::Signal == false)
 	{
 		if((poll(&fds[0],fds.size(),-1) == -1) && Server::Signal == false)
@@ -92,19 +92,19 @@ void Server::SerSocket()
 void Server::SignalHandler(int signum)
 {
     (void)signum;
-    std::cout << std::endl << "Signale recived" << std::endl;
+    std::cout << std::endl << "SIGNAL CAUGHT !" << std::endl;
     Server::Signal = true;
 }
 void Server::CloseFds()
 {
 	for(size_t i = 0; i < this->clients.size(); i++)
 	{ 
-		std::cout << RED << "Client: " << clients[i].GetFd() << " Disconnected" << WHI << std::endl;
+		std::cout << RED << "Client is Disconnected" << WHI << std::endl;
 		close(clients[i].GetFd());
 	}
 	if (sockFd != -1)
 	{
-		std::cout << RED << "Server: " << sockFd << " Disconnected" << WHI << std::endl;
+		std::cout << RED << "PIPE-SERVER has been Disconnected" << WHI << std::endl;
 		close(sockFd);
 	}
 }
@@ -134,7 +134,7 @@ void Server::AcceptNewClient()
 	cli.setHostname(this->getHostName());
 	clients.push_back(cli);
 	fds.push_back(NewPoll); 
-	std::cout << GRE << "Client <" << incofd << "> Connected" << WHI << std::endl;
+	std::cout << GRE << "Client is Connected" << WHI << std::endl;
 }
 
 void	Server::Registration(Client &cli, cmd &command)
@@ -182,14 +182,14 @@ void Server::ReceiveNewData(int fd)
 	ssize_t bytes = recv(fd, buff, sizeof(buff) - 1 , 0);
 	if(bytes <= 0 || fd == -1)
 	{ 
-		std::cout << RED << "Client " << fd << " Disconnected" << WHI << std::endl;
+		std::cout << RED << "Client is Disconnected" << WHI << std::endl;
 		removeClient(fd);
 	}
 	else
 	{
 		buff[bytes] = '\0';
 		std::vector<cmd>	commands = this->parseBuffer(buff);
-		printVectorCmd(commands);
+		// printVectorCmd(commands);
 		for (size_t i = 0; i < commands.size(); i++)
 		{
 			// PING PONG
@@ -278,7 +278,6 @@ void	Server::handleNick(Client &cli, cmd &command)
 	}
 	if (cli.registerState == HAVE_REGISTERD)
 	{
-		std::cout << GRE << "update nickname to: |" << newNick << "|\e[0m" << std::endl;
 		for (size_t i = 0; i < channels.size(); i++)
 		{
 			channels[i]->updateNick(cli.nick, newNick);
@@ -316,4 +315,7 @@ std::string const Server::getHostName()
 }
 
 Server::~Server()
-{}
+{
+	for (size_t i = 0; i < channels.size(); i++)
+		delete channels[i];
+}

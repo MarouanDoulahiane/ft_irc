@@ -92,19 +92,26 @@ Client	&Server::findClient(int fd)
 			return clients[i];
 	}
 	CloseFds();
-	throw std::runtime_error("Client not found");// need to double ckeck
+	throw std::runtime_error("Client not found");
 }
-//lol
+
 void Server::removeClient(int fd)
 {
-	// remove client from all channels he is in
 	Client &cli = findClient(fd);
 	for (unsigned int i = 0; i < this->channels.size(); i++)
 	{
 		if (channels[i]->nickInChannel(cli.nick))
+		{
 			channels[i]->deleteClient(cli);
+			if (channels[i]->getClients().size() == 0)
+			{
+				delete channels[i];
+				channels.erase(channels.begin() + i);
+			}
+			else if (channels[i]->isOnOperatorList(cli.GetFd()))
+				channels[i]->deleteOperator(cli.GetFd());
+		}
 	}
-	// remove client from clients list
 	for (unsigned int i = 0; i < clients.size(); i++)
 	{
 		if (clients[i].GetFd() == fd)
@@ -113,7 +120,6 @@ void Server::removeClient(int fd)
 			break;
 		}
 	}
-	// remove client from fds list
 	for (unsigned int i = 0; i < fds.size(); i++)
 	{
 		if (fds[i].fd == fd)

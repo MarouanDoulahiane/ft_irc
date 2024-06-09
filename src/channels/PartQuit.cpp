@@ -19,8 +19,25 @@ void	Server::handlePART(cmd &command, Client &cli)
 		return;
 	}
 	channel->deleteClient(cli);
-	channel->sendMessageCh(RPL_PART(this->getHostName(), cli.nick, cli.user, command.args[1], command.buff));
+	if (channel->clients.size())
+		channel->sendMessageCh(RPL_PART(this->getHostName(), cli.nick, cli.user, command.args[1], command.buff));
+	else
+		removeChannel(channel->getName());
 	cli.send_message(RPL_PART(this->getHostName(), cli.nick, cli.user, command.args[1], command.buff));
+}
+
+
+void Server::removeChannel(std::string name)
+{
+	for (size_t i = 0; i < channels.size(); i++)
+	{
+		if (channels[i]->getName() == name)
+		{
+			delete channels[i];
+			channels.erase(channels.begin() + i);
+			return;
+		}
+	}
 }
 
 
@@ -36,9 +53,13 @@ void	Server::handleQUIT(cmd &command, Client &cli)
 	{
 		if (this->channels[i]->nickInChannel(cli.nick))
 		{
-			this->channels[i]->sendMessageCh(RPL_QUIT(this->getHostName(), cli.nick, cli.user, command.buff));
+			this->channels[i]->deleteClient(cli);
+			if (this->channels[i]->clients.size())
+				this->channels[i]->sendMessageCh(RPL_QUIT(this->getHostName(), cli.nick, cli.user, command.buff));
+			else
+				removeChannel(this->channels[i]->getName());
 		}
 	}
-	std::cout << RED << "Client: " << cli.GetFd() << " Disconnected" << WHI << std::endl;
+	std::cout << RED << "Client is Disconnected" << WHI << std::endl;
 	removeClient(cli.GetFd());
 }

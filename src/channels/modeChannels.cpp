@@ -9,7 +9,6 @@ void Server::handleMode(cmd &command, Client &cli)
         return;
     }
     std::string target = command.args[1];
-    std::cout << RED << "START MODE DEBUG   " << command.args.size() << WHI << std::endl;
     if (command.args.size() < 3)
     {
         Channel *channel = isChannelExisiting(target);
@@ -279,7 +278,6 @@ void Server::applyModeFlags(std::string channelName, std::string modeFlags, std:
             }
             else if(setFlag == false)
             {
-                std::cout << flag << setFlag << std::endl;
                 actionIt->second(channel, setFlag, empty, client, this->getHostName());
             }
             else

@@ -112,15 +112,3 @@ void FKey(Channel* channel, bool setFlag,  std::string& additionalParams, Client
 void FUserLimit(Channel* channel, bool setFlag,  std::string& additionalParams, Client &client, std::string hostName);
 void FOperator(Channel* channel, bool setFlag,  std::string& additionalParams, Client& client, std::string hostName);
 
-
-//         std::vector<Client> getClients();
-//         std::string getListClients();
-
-//         void eraseInvitedClient(Client &client);
-
-//         void eraseClient(Client &client);
-//         void eraseChannel(std::string channelName);
-//         void eraseOp(int fd);
-
-//         bool partClient(Client &c, std::string reason);
-//         bool quitClient(Client &c, std::string reason);

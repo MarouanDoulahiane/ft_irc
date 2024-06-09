@@ -20,6 +20,7 @@ Channel::Channel(std::string name, std::string pass, Client &client, Server *srv
     if (!this->validChannelName(name))
         throw ClientErrMsgException(ERR_BADCHANNELNAME(client.nick, srv_hostname, name), client);
     this->name = name;
+    this->setMode("o");
     if (pass.empty() == true)
     {
         this->isPasswordSet = false;
@@ -38,7 +39,7 @@ Channel::Channel(std::string name, std::string pass, Client &client, Server *srv
         this->password = pass;
         this->Operators.push_back(client.GetFd());
         this->add(client, pass);
-        this->setMode("+k");
+        this->setMode("k");
     }
 }
 
@@ -83,7 +84,6 @@ bool Channel::add(Client &client, std::string pass)
 
 void Channel::addOperator(const std::string& nickname, std::string hostName, Client &client)
 {
-    std::cout << RED << "addOperator: " << nickname << WHI << std::endl;
     if (nickInChannel(nickname) == true)
     {
         std::vector<Client>::iterator it;
@@ -107,10 +107,8 @@ void Channel::addOperator(const std::string& nickname, std::string hostName, Cli
 
 void Channel::removeOperator(const std::string& nickname, std::string hostName, Client &client)
 {
-    std::cout << RED << "addOperator: " << nickname << WHI << std::endl;
     if (nickInChannel(nickname) == true)
     {
-    std::cout << "removeOperator" << std::endl;
         Client *client = this->Ircserv->isClientBef(nickname);
         if (client == NULL)
         {
@@ -145,6 +143,7 @@ void Channel::deleteOperator(int fd)
         if (*it == fd)
         {
             this->Operators.erase(it);
+            this->sendMessageCh(RPL_MODEISOP(name, this->srv_hostname, "-o", this->Ircserv->findClient(fd).nick));
             return;
         }
     }
@@ -211,8 +210,6 @@ void Channel::sendMessageCh(Client &client, std::string msg)
             it->send_message(msg);
 }
 
-
-/////-------------------------------------
 // setters :
 void Channel::setTopic(std::string newTopic)
 {
@@ -258,10 +255,7 @@ void Channel::setMode(const std::string& newMode)
     Mode = newMode;
 }
 
-
-////////////////////////-------------------
 // gettters
-
 std::string Channel::getListClients()
 {
     std::string str;
@@ -415,3 +409,6 @@ bool Channel::isModeSet(std::string mode)
 {
     return mode == this->Mode;
 }
+
+Channel::~Channel()
+{}

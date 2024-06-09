@@ -1,7 +1,9 @@
 #include "../headers/Server.hpp"
 #include <iostream>
 
-int main(int ac, char **av) {
+
+int main(int ac, char **av) 
+{
 	if (ac != 3)
 	{
 		std::cerr << "Usage: ./ircserv [port] [password]" << std::endl;
@@ -10,7 +12,7 @@ int main(int ac, char **av) {
 	Server irc;
 	try
 	{
-	    std::cout << "---- SERVER ----" << std::endl;
+	    std::cout << GRE << ">>>> PIPE-SERVER IS LOADING <<<<" << WHI << std::endl;
         signal(SIGINT, Server::SignalHandler);
         signal(SIGQUIT, Server::SignalHandler);
         irc.IrcServerInit(av[1], av[2]);
@@ -20,6 +22,6 @@ int main(int ac, char **av) {
 		irc.CloseFds();
 		std::cerr << e.what() << std::endl;
 	}
-	std::cout << "The Server Closed!" << std::endl;
+	std::cout<< RED << "The Server Closed!" << WHI << std::endl;
 	return 0;
 }

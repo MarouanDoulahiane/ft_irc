@@ -91,9 +91,8 @@ class Server
 		//getters
 		std::string const getHostName();
     	void CloseFds();
+		void removeChannel(std::string name);
 };
 
 std::vector<std::string> split(const std::string &s, char delimiter);
 
-
-// MODE #ch +i +t +k +l omar

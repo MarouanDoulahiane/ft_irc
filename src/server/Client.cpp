@@ -42,7 +42,6 @@ void Client::send_to_all_channels(std::string msg)
 	}
 }
 
-// Client::Client(int sock, std::string nick, std::string user, std::string hostname);
 void Client::send_messageCH(char *msg)
 {
 	write(this->sock, msg, strlen(msg));
